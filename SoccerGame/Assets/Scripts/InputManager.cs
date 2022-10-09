@@ -6,14 +6,14 @@ using UnityEngine.InputSystem;
 public class InputManager : MonoBehaviour
 {
     private List<PlayerInput> playerInputs = new List<PlayerInput>();
-    [SerializeField]
-    private List<Transform> spawnPoints;
+
     [SerializeField]
     private GameObject playerObjectPrefab;
     PlayerInputManager playerInputManager;
     List<InputDevice> inputDevices;
     bool isSplitScreen = false;
     public bool isLocalMultiplayer = false;
+
 
 
     private void Awake()
@@ -37,13 +37,8 @@ public class InputManager : MonoBehaviour
     {
         Debug.Log("Adding player!");
         playerInputs.Add(playerInput);
-        Transform playerParent = playerInput.transform.parent;
-        playerParent.position = spawnPoints[playerInputs.Count - 1].position;
-        playerParent.rotation = spawnPoints[playerInputs.Count - 1].rotation;
-        if (playerParent.forward.z < 0)
-        {
-            playerParent.GetComponentInChildren<FollowPlayer>().lookInOppositeDirection = true;
-        }
+        GameplayManager.instance.SpawnPlayer(playerInput);
+
         
     }
 
@@ -60,7 +55,7 @@ public class InputManager : MonoBehaviour
         foreach (InputDevice device in InputSystem.devices)
         {
             // Mouse is not a valid controller
-            if (device.displayName != "Mouse" && device.displayName != "Keyboard")
+            if (device.displayName != "Mouse")// && device.displayName != "Keyboard")
             {
                 inputDevices.Add(device);
                 Debug.Log(device.displayName);

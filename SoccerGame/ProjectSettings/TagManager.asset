@@ -15,9 +15,9 @@ TagManager:
   - Player
   - Leg
   - Ball
-  - 
-  - 
-  - 
+  - VisibleToTeam0
+  - VisibleToTeam1
+  - Wall
   - 
   - 
   - 

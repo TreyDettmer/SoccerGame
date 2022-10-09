@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour
 {
@@ -34,24 +35,24 @@ public class PlayerController : MonoBehaviour
     public float legSpringDampening;
 
     [Header("Kicking")]
-    public float backswingForce;
-    public float downswingForce;
-    public float kickDelay = 1.5f;
-    private bool canKickLeft = true;
-    private bool canKickRight = true;
+    public AnimationCurve kickPowerCurve;
+    public float kickPowerFactor = 30f;
+    public float maxKickBackswingTime = 1.5f;
+    private float kickForce = 0f;
     private bool isKicking = false;
-    private bool isBackswinging_L = false;
-    private bool isDownswinging_L = false;
-    private bool isResetting_L = false;
-    private bool isBackswinging_R = false;
-    private bool isDownswinging_R = false;
-    private bool isResetting_R = false;
+    private bool canKick = true;
+    private float kickBackswingElapsedTime = 0f;
+    
 
-    [SerializeField]
-    private Transform ballDetectorOrigin;
     [SerializeField]
     private float ballDetectorRadius;
-
+    [SerializeField]
+    private float ballDetectionDistance;
+    [SerializeField]
+    private LayerMask ballLayerMask;
+    private bool isWithinKickingRange = false;
+    [SerializeField]
+    private RawImage kickIndicatorImage;
 
     [Header("Action")]
     public AnimationCurve backswingAngleFactorFromTime;
@@ -72,6 +73,7 @@ public class PlayerController : MonoBehaviour
     private InputActionMap playerActionMap;
     private PlayerInput playerInput;
     private Camera cam;
+    public int teamIndex = -1;
 
 
 
@@ -143,32 +145,51 @@ public class PlayerController : MonoBehaviour
 
 
             
-            Vector3 unitVelocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
-            float velDot = Vector3.Dot(unitGoalVelocity, unitVelocity);
-            float accel = acceleration * AccelerationFactorFromDot.Evaluate(velDot);
-            Vector3 _goalVelocity = unitGoalVelocity * maxSpeed * speedFactor;
+        Vector3 unitVelocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
+        float velDot = Vector3.Dot(unitGoalVelocity, unitVelocity);
+        float accel = acceleration * AccelerationFactorFromDot.Evaluate(velDot);
+        Vector3 _goalVelocity = unitGoalVelocity * maxSpeed * speedFactor;
 
-            goalVelocity = Vector3.MoveTowards(goalVelocity, _goalVelocity, accel * Time.fixedDeltaTime);
-            Vector3 neededAccel = (goalVelocity - rb.velocity) / Time.fixedDeltaTime;
+        goalVelocity = Vector3.MoveTowards(goalVelocity, _goalVelocity, accel * Time.fixedDeltaTime);
+        Vector3 neededAccel = (goalVelocity - rb.velocity) / Time.fixedDeltaTime;
 
-            float maxAccel = maxAccelForce * MaxAccelerationFactorFromDot.Evaluate(velDot) * maxAccelForceFactor;
+        float maxAccel = maxAccelForce * MaxAccelerationFactorFromDot.Evaluate(velDot) * maxAccelForceFactor;
 
-            neededAccel = Vector3.ClampMagnitude(neededAccel, maxAccel);
-            //Debug.Log("Ground force: " + Vector3.Scale(neededAccel * rb.mass, forceScale));
-            rb.AddForce(Vector3.Scale(neededAccel * rb.mass, forceScale));
+        neededAccel = Vector3.ClampMagnitude(neededAccel, maxAccel);
+        //Debug.Log("Ground force: " + Vector3.Scale(neededAccel * rb.mass, forceScale));
+        rb.AddForce(Vector3.Scale(neededAccel * rb.mass, forceScale));
 
-        
+
+        Collider[] ballsWithinRange = Physics.OverlapSphere(transform.position + transform.forward * ballDetectionDistance, ballDetectorRadius, ballLayerMask);
+        if (ballsWithinRange.Length > 0)
+        {
+            if (!isWithinKickingRange)
+            {
+                isWithinKickingRange = true;
+                kickIndicatorImage.color = new Color(0f,1f,0f,.5f);
+            }
+        }
+        else
+        {
+            if (isWithinKickingRange)
+            {
+                isWithinKickingRange = false;
+                kickIndicatorImage.color = new Color(1f, 1f, 1f, .5f);
+            }
+        }
 
 
     }
 
+    
+
     private void OnDrawGizmosSelected()
     {
-        if (ballDetectorOrigin != null)
-        {
-            Gizmos.color = Color.blue;
-            Gizmos.DrawWireSphere(ballDetectorOrigin.position, ballDetectorRadius);
-        }
+
+        Gizmos.color = Color.blue;
+        Debug.DrawLine(transform.position, transform.position + transform.forward * ballDetectionDistance, Color.red);
+        Gizmos.DrawWireSphere(transform.position + transform.forward * ballDetectionDistance, ballDetectorRadius);
+        
     }
 
     private void OnEnable()
@@ -200,7 +221,17 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
+        if (isKicking)
+        {
+            kickBackswingElapsedTime += Time.deltaTime;
+            float kickPowerCurveValue = kickPowerCurve.Evaluate(kickBackswingElapsedTime / maxKickBackswingTime);
+            kickForce = kickPowerFactor * kickPowerCurveValue;
+            GameplayGui.instance.UpdatePowerMeter(teamIndex, kickBackswingElapsedTime / maxKickBackswingTime);
+            if (kickBackswingElapsedTime >= maxKickBackswingTime)
+            {
+                EndKick();
+            }
+        }
 
 
     }
@@ -260,44 +291,49 @@ public class PlayerController : MonoBehaviour
     {
         if (context.started)
         {
-            StartKick(context);
+            StartKick();
         }
         else if (context.canceled)
         {
-            EndKick(context);
+            EndKick();
         }
     }
 
-    public void StartKick(InputAction.CallbackContext context)
+    public void StartKick()
     {
-        Debug.Log("Starting kick");
+        
+        if (!isKicking)
+        {
+            Debug.Log("Starting kick");
+            isKicking = true;
+            canKick = false;
+        }
+
     }
 
-    public void EndKick(InputAction.CallbackContext context)
+
+
+    public void EndKick()
     {
-
-        Collider[] ballsHit = Physics.OverlapSphere(ballDetectorOrigin.position, ballDetectorRadius);
-        if (ballsHit.Length > 0)
+        if (!isKicking)
         {
-            for (int i = 0; i < ballsHit.Length; i++)
-            {
-                Debug.Log(ballsHit[i].name);
-                if (ballsHit[i].name == "Ball")
-                {
-                    Ball ball = ballsHit[i].GetComponent<Ball>();
-                    ball.GetComponent<Rigidbody>().AddForce(transform.forward * 10f, ForceMode.Impulse);
-                }
-            }
-
-            //Debug.Log(ballsHit);
-            //Debug.Log("Kicked Ball");
-
+            return;
         }
-        else
+
+        RaycastHit[] raycastHits = Physics.SphereCastAll(transform.position, ballDetectorRadius, transform.forward,ballDetectionDistance,ballLayerMask);
+        for (int i = 0; i < raycastHits.Length; i++)
         {
-            Debug.Log("Missed Ball");
+
+            raycastHits[i].collider.GetComponent<Rigidbody>().AddForceAtPosition(transform.forward * kickForce, raycastHits[i].point, ForceMode.Impulse);
+
+            
         }
-    
+
+
+
+        GameplayGui.instance.UpdatePowerMeter(teamIndex, 0f);
+        isKicking = false;
+        kickBackswingElapsedTime = 0f;
     }
 
 }
