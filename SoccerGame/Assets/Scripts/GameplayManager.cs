@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using DG.Tweening;
 
 public class GameplayManager : MonoBehaviour
 {
@@ -25,6 +26,7 @@ public class GameplayManager : MonoBehaviour
         if (instance == null)
         {
             instance = this;
+            DOTween.Init();
         }
         else
         {

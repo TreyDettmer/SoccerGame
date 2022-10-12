@@ -781,7 +781,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 652134527}
-  m_Material: {fileID: 13400000, guid: c9d47fe3d2bed08419ed8849151dd8ef, type: 2}
+  m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
@@ -944,8 +944,8 @@ Rigidbody:
   m_GameObject: {fileID: 696985027}
   serializedVersion: 2
   m_Mass: 0.6
-  m_Drag: 0
-  m_AngularDrag: 0.05
+  m_Drag: 0.01
+  m_AngularDrag: 0.01
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
@@ -1041,6 +1041,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4722704dd1be5048a18b4c3ac80e074, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  radius: 0.5
+  airDensity: 0.03
+  artificialDragForce: 0.5
 --- !u!1 &699617711
 GameObject:
   m_ObjectHideFlags: 0

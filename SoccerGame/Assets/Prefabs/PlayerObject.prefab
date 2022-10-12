@@ -243,11 +243,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7352912024129578645}
-  - component: {fileID: 7352912024129578632}
   - component: {fileID: 7352912024129578633}
   - component: {fileID: 7352912024129578646}
   - component: {fileID: 2383872633411465875}
   - component: {fileID: 8293167783291917214}
+  - component: {fileID: 2385957261344253877}
   m_Layer: 7
   m_Name: Player
   m_TagString: Untagged
@@ -272,23 +272,10 @@ Transform:
   - {fileID: 7352912024463494779}
   - {fileID: 4181866217303699755}
   - {fileID: 1158342649534833003}
+  - {fileID: 9079763102109756070}
   m_Father: {fileID: 3180081216801394036}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!136 &7352912024129578632
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7352912024129578634}
-  m_Material: {fileID: 13400000, guid: db85d80de3517694a9e1bab487ff383c, type: 2}
-  m_IsTrigger: 0
-  m_Enabled: 0
-  m_Radius: 0.5
-  m_Height: 1.3549097
-  m_Direction: 1
-  m_Center: {x: 0, y: 0.32254517, z: 0}
 --- !u!54 &7352912024129578633
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -318,10 +305,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxSpeed: 10
-  acceleration: 20
-  maxAccelForce: 100
+  acceleration: 16
+  maxAccelForce: 300
   forceScale: {x: 1, y: 0, z: 1}
-  rotationSpeed: 720
+  rotationSpeed: 600
   AccelerationFactorFromDot:
     serializedVersion: 2
     m_Curve:
@@ -421,10 +408,43 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  kickHeightCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.86495525
+      value: 0.48341653
+      inSlope: 0.023897013
+      outSlope: 0.023897013
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.8562296
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 2
+      outSlope: 2
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  kickHeightFactor: 12
   kickPowerFactor: 30
+  kickSpinFactor: 10
   maxKickBackswingTime: 0.8
-  ballDetectorRadius: 0.85
-  ballDetectionDistance: 0.95
   ballLayerMask:
     serializedVersion: 2
     m_Bits: 512
@@ -438,6 +458,9 @@ MonoBehaviour:
   maxBackswingAngle: 0
   maxDownswingAngle: 0
   kickSwingSpeed: 60
+  isSliding: 0
+  slideSpeed: 5000
+  slideTime: 0.5
   groundLayerMask:
     serializedVersion: 2
     m_Bits: 576
@@ -580,6 +603,22 @@ MonoBehaviour:
         m_CallState: 2
     m_ActionId: 73dd976b-fca3-4e86-96fc-a0d75dfef7b1
     m_ActionName: Player/StartKick[/XInputControllerWindows/buttonEast,/Mouse/leftButton]
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 7352912024129578646}
+        m_TargetAssemblyTypeName: PlayerController, Assembly-CSharp
+        m_MethodName: Slide
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 2591cb12-f087-4fc2-b497-6edf1703fa03
+    m_ActionName: Player/Slide[/Mouse/rightButton]
   m_NeverAutoSwitchControlSchemes: 1
   m_DefaultControlScheme: 
   m_DefaultActionMap: Player
@@ -598,6 +637,26 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 1.3163561, z: 1}
   m_Center: {x: 0, y: 0.2617126, z: 0}
+--- !u!95 &2385957261344253877
+Animator:
+  serializedVersion: 4
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7352912024129578634}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: a3853b78d7064fb49a40bb5beb683172, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 1
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorControllerStateOnDisable: 0
 --- !u!1 &7352912024463494780
 GameObject:
   m_ObjectHideFlags: 0
@@ -712,6 +771,51 @@ Transform:
   m_Father: {fileID: 7352912024129578645}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &7604433379630427231
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9079763102109756070}
+  - component: {fileID: 3190561613554627062}
+  m_Layer: 7
+  m_Name: BallDetector
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9079763102109756070
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7604433379630427231}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7352912024129578645}
+  m_RootOrder: 5
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &3190561613554627062
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7604433379630427231}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 1.12, y: 1, z: 1.41}
+  m_Center: {x: 0, y: 0, z: 0.75}
 --- !u!1 &7894165937454149753
 GameObject:
   m_ObjectHideFlags: 0

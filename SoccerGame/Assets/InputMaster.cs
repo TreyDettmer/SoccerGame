@@ -89,6 +89,15 @@ public partial class @InputMaster : IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Slide"",
+                    ""type"": ""Button"",
+                    ""id"": ""2591cb12-f087-4fc2-b497-6edf1703fa03"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -289,6 +298,28 @@ public partial class @InputMaster : IInputActionCollection2, IDisposable
                     ""action"": ""Kick"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""72df3d7d-e99f-4f6f-bbf3-188d84a5f88c"",
+                    ""path"": ""<Mouse>/rightButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard and mouse"",
+                    ""action"": ""Slide"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""ab8d5fad-f1f3-4622-896b-de6461010a40"",
+                    ""path"": ""<Gamepad>/buttonWest"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""Slide"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -332,6 +363,7 @@ public partial class @InputMaster : IInputActionCollection2, IDisposable
         m_Player_KickLeftDownswing = m_Player.FindAction("KickLeftDownswing", throwIfNotFound: true);
         m_Player_KickRightDownswing = m_Player.FindAction("KickRightDownswing", throwIfNotFound: true);
         m_Player_Kick = m_Player.FindAction("Kick", throwIfNotFound: true);
+        m_Player_Slide = m_Player.FindAction("Slide", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -398,6 +430,7 @@ public partial class @InputMaster : IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_KickLeftDownswing;
     private readonly InputAction m_Player_KickRightDownswing;
     private readonly InputAction m_Player_Kick;
+    private readonly InputAction m_Player_Slide;
     public struct PlayerActions
     {
         private @InputMaster m_Wrapper;
@@ -409,6 +442,7 @@ public partial class @InputMaster : IInputActionCollection2, IDisposable
         public InputAction @KickLeftDownswing => m_Wrapper.m_Player_KickLeftDownswing;
         public InputAction @KickRightDownswing => m_Wrapper.m_Player_KickRightDownswing;
         public InputAction @Kick => m_Wrapper.m_Player_Kick;
+        public InputAction @Slide => m_Wrapper.m_Player_Slide;
         public InputActionMap Get() { return m_Wrapper.m_Player; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -439,6 +473,9 @@ public partial class @InputMaster : IInputActionCollection2, IDisposable
                 @Kick.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnKick;
                 @Kick.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnKick;
                 @Kick.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnKick;
+                @Slide.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnSlide;
+                @Slide.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnSlide;
+                @Slide.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnSlide;
             }
             m_Wrapper.m_PlayerActionsCallbackInterface = instance;
             if (instance != null)
@@ -464,6 +501,9 @@ public partial class @InputMaster : IInputActionCollection2, IDisposable
                 @Kick.started += instance.OnKick;
                 @Kick.performed += instance.OnKick;
                 @Kick.canceled += instance.OnKick;
+                @Slide.started += instance.OnSlide;
+                @Slide.performed += instance.OnSlide;
+                @Slide.canceled += instance.OnSlide;
             }
         }
     }
@@ -495,5 +535,6 @@ public partial class @InputMaster : IInputActionCollection2, IDisposable
         void OnKickLeftDownswing(InputAction.CallbackContext context);
         void OnKickRightDownswing(InputAction.CallbackContext context);
         void OnKick(InputAction.CallbackContext context);
+        void OnSlide(InputAction.CallbackContext context);
     }
 }

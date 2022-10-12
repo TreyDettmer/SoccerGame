@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using DG.Tweening;
 
 public class PlayerController : MonoBehaviour
 {
@@ -36,29 +37,39 @@ public class PlayerController : MonoBehaviour
 
     [Header("Kicking")]
     public AnimationCurve kickPowerCurve;
+    public AnimationCurve kickHeightCurve;
+    public float kickHeightFactor = 10f; 
     public float kickPowerFactor = 30f;
+    public float kickSpinFactor = 20f;
     public float maxKickBackswingTime = 1.5f;
     private float kickForce = 0f;
+    private float kickHeightForce = 0f;
     private bool isKicking = false;
     private bool canKick = true;
     private float kickBackswingElapsedTime = 0f;
     
 
     [SerializeField]
-    private float ballDetectorRadius;
-    [SerializeField]
-    private float ballDetectionDistance;
-    [SerializeField]
     private LayerMask ballLayerMask;
     private bool isWithinKickingRange = false;
+    private Ball ball;
     [SerializeField]
     private RawImage kickIndicatorImage;
 
-    [Header("Action")]
+    
     public AnimationCurve backswingAngleFactorFromTime;
     public float maxBackswingAngle;
     public float maxDownswingAngle;
     public float kickSwingSpeed = 60f;
+
+    
+    private Animator animator;
+    [Header("Action")]
+    public bool isSliding = false;
+    public float slideSpeed = 5f;
+    public float slideTime = 1f;
+    private Vector3 slideDirection = Vector3.zero;
+    private bool slidIntoBall = false;
 
     private bool isGrounded = false;
     public LayerMask groundLayerMask;
@@ -83,6 +94,7 @@ public class PlayerController : MonoBehaviour
         playerInputAsset = GetComponent<PlayerInput>().actions;
         playerActionMap = playerInputAsset.FindActionMap("Player");
         cam = transform.parent.GetComponentInChildren<Camera>();
+        animator = GetComponent<Animator>();
     }
 
     void Start()
@@ -92,14 +104,18 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        
+        if (isSliding)
+        {
+            if (rb.velocity.sqrMagnitude < 5f)
+            {
+                rb.AddForce(slideDirection * slideSpeed);
+                
+            }
+            return;
+        }
         Vector2 direction = playerActionMap["Movement"].ReadValue<Vector2>();
         verticalInput = direction.y;
         horizontalInput = direction.x;
-        if (Input.GetKeyDown(KeyCode.T))
-        {
-            rb.AddForceAtPosition(new Vector3(0, 0, 5f), transform.position + new Vector3(0f, 60f, 0f));
-        }
 
 
         //unitGoalVelocity = new Vector3(horizontalInput, 0f, verticalInput);
@@ -160,35 +176,12 @@ public class PlayerController : MonoBehaviour
         rb.AddForce(Vector3.Scale(neededAccel * rb.mass, forceScale));
 
 
-        Collider[] ballsWithinRange = Physics.OverlapSphere(transform.position + transform.forward * ballDetectionDistance, ballDetectorRadius, ballLayerMask);
-        if (ballsWithinRange.Length > 0)
-        {
-            if (!isWithinKickingRange)
-            {
-                isWithinKickingRange = true;
-                kickIndicatorImage.color = new Color(0f,1f,0f,.5f);
-            }
-        }
-        else
-        {
-            if (isWithinKickingRange)
-            {
-                isWithinKickingRange = false;
-                kickIndicatorImage.color = new Color(1f, 1f, 1f, .5f);
-            }
-        }
-
-
     }
 
     
 
     private void OnDrawGizmosSelected()
     {
-
-        Gizmos.color = Color.blue;
-        Debug.DrawLine(transform.position, transform.position + transform.forward * ballDetectionDistance, Color.red);
-        Gizmos.DrawWireSphere(transform.position + transform.forward * ballDetectionDistance, ballDetectorRadius);
         
     }
 
@@ -226,6 +219,8 @@ public class PlayerController : MonoBehaviour
             kickBackswingElapsedTime += Time.deltaTime;
             float kickPowerCurveValue = kickPowerCurve.Evaluate(kickBackswingElapsedTime / maxKickBackswingTime);
             kickForce = kickPowerFactor * kickPowerCurveValue;
+            float kickHeightCurveValue = kickHeightCurve.Evaluate(kickBackswingElapsedTime / maxKickBackswingTime);
+            kickHeightForce = kickHeightFactor * kickHeightCurveValue;
             GameplayGui.instance.UpdatePowerMeter(teamIndex, kickBackswingElapsedTime / maxKickBackswingTime);
             if (kickBackswingElapsedTime >= maxKickBackswingTime)
             {
@@ -302,7 +297,7 @@ public class PlayerController : MonoBehaviour
     public void StartKick()
     {
         
-        if (!isKicking)
+        if (!isKicking && !isSliding)
         {
             Debug.Log("Starting kick");
             isKicking = true;
@@ -320,13 +315,18 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        RaycastHit[] raycastHits = Physics.SphereCastAll(transform.position, ballDetectorRadius, transform.forward,ballDetectionDistance,ballLayerMask);
-        for (int i = 0; i < raycastHits.Length; i++)
+        if (ball != null)
         {
+            Vector3 directionToBall = (ball.transform.position - transform.position).normalized;
+            directionToBall.y = 0;
+            directionToBall = directionToBall.normalized;
+            Vector3 forward = new Vector3(transform.forward.x, 0f, transform.forward.z).normalized;
+            float dot = Vector3.SignedAngle(directionToBall, forward,Vector3.up);
+            Debug.Log("Dot: " + dot);
+            Vector3 torque = new Vector3(0f,-dot * kickSpinFactor,0f);
 
-            raycastHits[i].collider.GetComponent<Rigidbody>().AddForceAtPosition(transform.forward * kickForce, raycastHits[i].point, ForceMode.Impulse);
-
-            
+            ball.GetComponent<Rigidbody>().AddForce(directionToBall * kickForce + new Vector3(0f,kickHeightForce,0f), ForceMode.Impulse);
+            ball.GetComponent<Rigidbody>().AddTorque(torque, ForceMode.VelocityChange);
         }
 
 
@@ -336,4 +336,90 @@ public class PlayerController : MonoBehaviour
         kickBackswingElapsedTime = 0f;
     }
 
+    public void Slide(InputAction.CallbackContext context)
+    {  
+        if (isSliding || context.canceled || !isGrounded)
+        {
+            return;
+        }
+        Debug.Log("Slide");
+        isSliding = true;
+        slideDirection = transform.forward;
+        slideDirection.y = 0;
+        slideDirection = slideDirection.normalized;
+        //Vector3.Dot(slideDirection,)
+        //slideDirection *= Vector3.Project(rb.velocity, slideDirection).magnitude;
+        //animator.SetBool("isSliding", true);
+        StartCoroutine(SlideRoutine());
+        transform.DORotate(new Vector3(-90f, 0f, 0f), slideTime/4f,RotateMode.LocalAxisAdd);
+    }
+
+    IEnumerator SlideRoutine()
+    {
+        yield return new WaitForSeconds(slideTime * .75f);
+        transform.DORotate(new Vector3(90f, 0f, 0f), slideTime / 4f, RotateMode.LocalAxisAdd);
+        yield return new WaitForSeconds(slideTime * .25f);
+        EndSlide();
+    }
+
+    public void EndSlide()
+    {
+        //animator.SetBool("isSliding", false);
+
+        slidIntoBall = false;
+        isSliding = false;
+        
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.collider.gameObject.layer == LayerMask.NameToLayer("Ball"))
+        {
+            if (isSliding)
+            {
+                slidIntoBall = true;
+            }
+            
+        }
+        else if (collision.collider.gameObject.layer == LayerMask.NameToLayer("Player"))
+        {
+            if (collision.collider.GetComponent<PlayerController>())
+            {
+                if (collision.collider.GetComponent<PlayerController>().teamIndex != teamIndex)
+                {
+                    if (isSliding && slidIntoBall == false)
+                    {
+                        Debug.Log("Foul on team " + teamIndex);
+                    }
+                }
+            }
+
+        }
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.layer == LayerMask.NameToLayer("Ball"))
+        {
+            if (!isWithinKickingRange)
+            {
+                isWithinKickingRange = true;
+                kickIndicatorImage.color = new Color(0f, 1f, 0f, .5f);
+                ball = other.gameObject.GetComponent<Ball>();
+            }
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.gameObject.layer == LayerMask.NameToLayer("Ball"))
+        {
+            if (isWithinKickingRange)
+            {
+                isWithinKickingRange = false;
+                kickIndicatorImage.color = new Color(1f, 1f, 1f, .5f);
+                ball = null;
+            }
+        }
+    }
 }

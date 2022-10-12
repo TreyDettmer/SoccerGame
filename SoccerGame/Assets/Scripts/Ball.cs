@@ -6,6 +6,14 @@ public class Ball : MonoBehaviour
 {
 
     private Rigidbody rb;
+    [SerializeField]
+    private float radius = 0.5f;
+    [SerializeField]
+    private float airDensity = 0.1f;
+    [SerializeField]
+    private float artificialDragForce;
+
+    private int collidedObjectCount = 0;
     // Start is called before the first frame update
     void Start()
     {
@@ -15,16 +23,35 @@ public class Ball : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        if (transform.position.y < -1f)
+        {
+            GameplayManager.instance.ResetBall();
+        }
     }
 
     private void FixedUpdate()
     {
-        Debug.DrawRay(transform.position, rb.angularVelocity.normalized * 5f, Color.red);
-        Vector3 normalizedVel = new Vector3(rb.velocity.x, 0f, rb.velocity.y).normalized;
-        Vector3 midCross = Vector3.Cross(rb.angularVelocity.normalized, normalizedVel);
-        Debug.DrawRay(transform.position,Vector3.Cross(rb.angularVelocity.normalized, normalizedVel) * 5f, Color.green);
-        Vector3 finalCross = Vector3.Cross(rb.angularVelocity.normalized, midCross.normalized);
-        Debug.DrawRay(transform.position, finalCross.normalized * 5f, Color.blue);
+        if (collidedObjectCount == 0)
+        {
+            var direction = Vector3.Cross(rb.angularVelocity, rb.velocity);
+            var magnitude = 4 / 3f * Mathf.PI * airDensity * Mathf.Pow(radius, 3);
+            rb.AddForce(magnitude * direction);
+        }
+        rb.AddForce(rb.velocity.normalized * -1f * artificialDragForce);
+        rb.angularVelocity = rb.angularVelocity * .99f;
     }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        collidedObjectCount++;
+    }
+    private void OnCollisionExit(Collision collision)
+    {
+        collidedObjectCount--;
+        if (collidedObjectCount == 0)
+        {
+            Debug.Log("In the air!");
+        }
+    }
+
 }
