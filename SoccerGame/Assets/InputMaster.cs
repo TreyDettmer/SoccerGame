@@ -98,6 +98,42 @@ public partial class @InputMaster : IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Orbit"",
+                    ""type"": ""Value"",
+                    ""id"": ""9d07ec6d-11f3-4b80-a69a-a3d72818ceee"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""ChipModifier"",
+                    ""type"": ""Button"",
+                    ""id"": ""84aeca5a-deab-4971-a710-379264d9ce7b"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""RequestRestart"",
+                    ""type"": ""Button"",
+                    ""id"": ""9d66f87d-240f-4342-b2b1-f5ba9c589816"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Sprint"",
+                    ""type"": ""Button"",
+                    ""id"": ""5ac2497f-4157-4f31-b9bf-c14be49f6fd2"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -320,6 +356,94 @@ public partial class @InputMaster : IInputActionCollection2, IDisposable
                     ""action"": ""Slide"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""1ff50419-9f94-4f0d-b84b-9ca434932653"",
+                    ""path"": ""<Gamepad>/rightStick"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""Orbit"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""105bce8e-70da-4ad3-8182-7b98005405a3"",
+                    ""path"": ""<Mouse>/delta"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard and mouse"",
+                    ""action"": ""Orbit"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""d7221e00-13fc-40bb-8f6c-3f527d785991"",
+                    ""path"": ""<Gamepad>/leftShoulder"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""ChipModifier"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""b98141c0-9cb1-42e0-ac87-64aebd4d0c4c"",
+                    ""path"": ""<Mouse>/middleButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard and mouse"",
+                    ""action"": ""ChipModifier"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""17eb7226-b438-4b77-b953-40e20c88be1c"",
+                    ""path"": ""<Keyboard>/r"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard and mouse"",
+                    ""action"": ""RequestRestart"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""f2e6a20a-4117-4c82-b710-b8330cd12da6"",
+                    ""path"": ""<Gamepad>/select"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""RequestRestart"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""df9deb80-5613-4e43-9f80-03f838eeb5f3"",
+                    ""path"": ""<Keyboard>/f"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard and mouse"",
+                    ""action"": ""Sprint"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""95336098-405a-4e7f-b1fa-6a7741858933"",
+                    ""path"": ""<Gamepad>/rightTrigger"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""Sprint"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -364,6 +488,10 @@ public partial class @InputMaster : IInputActionCollection2, IDisposable
         m_Player_KickRightDownswing = m_Player.FindAction("KickRightDownswing", throwIfNotFound: true);
         m_Player_Kick = m_Player.FindAction("Kick", throwIfNotFound: true);
         m_Player_Slide = m_Player.FindAction("Slide", throwIfNotFound: true);
+        m_Player_Orbit = m_Player.FindAction("Orbit", throwIfNotFound: true);
+        m_Player_ChipModifier = m_Player.FindAction("ChipModifier", throwIfNotFound: true);
+        m_Player_RequestRestart = m_Player.FindAction("RequestRestart", throwIfNotFound: true);
+        m_Player_Sprint = m_Player.FindAction("Sprint", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -431,6 +559,10 @@ public partial class @InputMaster : IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_KickRightDownswing;
     private readonly InputAction m_Player_Kick;
     private readonly InputAction m_Player_Slide;
+    private readonly InputAction m_Player_Orbit;
+    private readonly InputAction m_Player_ChipModifier;
+    private readonly InputAction m_Player_RequestRestart;
+    private readonly InputAction m_Player_Sprint;
     public struct PlayerActions
     {
         private @InputMaster m_Wrapper;
@@ -443,6 +575,10 @@ public partial class @InputMaster : IInputActionCollection2, IDisposable
         public InputAction @KickRightDownswing => m_Wrapper.m_Player_KickRightDownswing;
         public InputAction @Kick => m_Wrapper.m_Player_Kick;
         public InputAction @Slide => m_Wrapper.m_Player_Slide;
+        public InputAction @Orbit => m_Wrapper.m_Player_Orbit;
+        public InputAction @ChipModifier => m_Wrapper.m_Player_ChipModifier;
+        public InputAction @RequestRestart => m_Wrapper.m_Player_RequestRestart;
+        public InputAction @Sprint => m_Wrapper.m_Player_Sprint;
         public InputActionMap Get() { return m_Wrapper.m_Player; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -476,6 +612,18 @@ public partial class @InputMaster : IInputActionCollection2, IDisposable
                 @Slide.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnSlide;
                 @Slide.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnSlide;
                 @Slide.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnSlide;
+                @Orbit.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnOrbit;
+                @Orbit.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnOrbit;
+                @Orbit.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnOrbit;
+                @ChipModifier.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnChipModifier;
+                @ChipModifier.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnChipModifier;
+                @ChipModifier.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnChipModifier;
+                @RequestRestart.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnRequestRestart;
+                @RequestRestart.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnRequestRestart;
+                @RequestRestart.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnRequestRestart;
+                @Sprint.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnSprint;
+                @Sprint.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnSprint;
+                @Sprint.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnSprint;
             }
             m_Wrapper.m_PlayerActionsCallbackInterface = instance;
             if (instance != null)
@@ -504,6 +652,18 @@ public partial class @InputMaster : IInputActionCollection2, IDisposable
                 @Slide.started += instance.OnSlide;
                 @Slide.performed += instance.OnSlide;
                 @Slide.canceled += instance.OnSlide;
+                @Orbit.started += instance.OnOrbit;
+                @Orbit.performed += instance.OnOrbit;
+                @Orbit.canceled += instance.OnOrbit;
+                @ChipModifier.started += instance.OnChipModifier;
+                @ChipModifier.performed += instance.OnChipModifier;
+                @ChipModifier.canceled += instance.OnChipModifier;
+                @RequestRestart.started += instance.OnRequestRestart;
+                @RequestRestart.performed += instance.OnRequestRestart;
+                @RequestRestart.canceled += instance.OnRequestRestart;
+                @Sprint.started += instance.OnSprint;
+                @Sprint.performed += instance.OnSprint;
+                @Sprint.canceled += instance.OnSprint;
             }
         }
     }
@@ -536,5 +696,9 @@ public partial class @InputMaster : IInputActionCollection2, IDisposable
         void OnKickRightDownswing(InputAction.CallbackContext context);
         void OnKick(InputAction.CallbackContext context);
         void OnSlide(InputAction.CallbackContext context);
+        void OnOrbit(InputAction.CallbackContext context);
+        void OnChipModifier(InputAction.CallbackContext context);
+        void OnRequestRestart(InputAction.CallbackContext context);
+        void OnSprint(InputAction.CallbackContext context);
     }
 }

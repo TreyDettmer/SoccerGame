@@ -18,8 +18,8 @@ TagManager:
   - VisibleToTeam0
   - VisibleToTeam1
   - Wall
-  - 
-  - 
+  - PlayerPenalized
+  - MinimapVisible
   - 
   - 
   - 

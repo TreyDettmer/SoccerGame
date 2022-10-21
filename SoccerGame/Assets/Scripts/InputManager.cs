@@ -37,7 +37,19 @@ public class InputManager : MonoBehaviour
     {
         Debug.Log("Adding player!");
         playerInputs.Add(playerInput);
-        GameplayManager.instance.SpawnPlayer(playerInput);
+        if (inputDevices[playerInputs.Count - 1].displayName == "Keyboard")
+        {
+            GameplayManager.instance.SpawnPlayer(playerInput,PlayerController.ControllerType.Keyboard);
+        }
+        else if (inputDevices[playerInputs.Count - 1].displayName == "Xbox Controller")
+        {
+            GameplayManager.instance.SpawnPlayer(playerInput, PlayerController.ControllerType.Xbox);
+        }
+        else
+        {
+            GameplayManager.instance.SpawnPlayer(playerInput, PlayerController.ControllerType.Switch);
+        }
+        
 
         
     }
@@ -55,7 +67,7 @@ public class InputManager : MonoBehaviour
         foreach (InputDevice device in InputSystem.devices)
         {
             // Mouse is not a valid controller
-            if (device.displayName != "Mouse")// && device.displayName != "Keyboard")
+            if (device.displayName != "Mouse" && device.displayName != "Keyboard")
             {
                 inputDevices.Add(device);
                 Debug.Log(device.displayName);

@@ -14,6 +14,10 @@ public class Ball : MonoBehaviour
     private float artificialDragForce;
 
     private int collidedObjectCount = 0;
+
+    public PlayerController lastKickedBy;
+    public PlayerController owner;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -25,7 +29,22 @@ public class Ball : MonoBehaviour
     {
         if (transform.position.y < -1f)
         {
-            GameplayManager.instance.ResetBall();
+            if (lastKickedBy != null)
+            {
+                if (lastKickedBy.teamIndex == 0)
+                {
+                    GameplayManager.instance.HandleOutOfBounds(1);
+                }
+                else
+                {
+                    GameplayManager.instance.HandleOutOfBounds(0);
+                }
+            }
+            else
+            {
+                GameplayManager.instance.HandleOutOfBounds();
+            }
+            
         }
     }
 
@@ -50,8 +69,26 @@ public class Ball : MonoBehaviour
         collidedObjectCount--;
         if (collidedObjectCount == 0)
         {
-            Debug.Log("In the air!");
         }
+    }
+
+    public void SetOwner(PlayerController playerController)
+    {
+        if (playerController != null)
+        {
+            owner = playerController;
+            rb.velocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            transform.parent = owner.transform;
+            rb.isKinematic = true;
+        }
+        else
+        {
+            rb.isKinematic = false;
+            transform.parent = null;
+            owner = null;
+        }
+        
     }
 
 }
