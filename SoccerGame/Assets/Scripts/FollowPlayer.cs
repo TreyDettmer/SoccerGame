@@ -7,7 +7,7 @@ using UnityEngine.UI;
 public class FollowPlayer : MonoBehaviour
 {
 
-    public PlayerController player;
+    public Player player;
     private List<Transform> targets = new List<Transform>();
 
     private Vector3 cameraOffset;

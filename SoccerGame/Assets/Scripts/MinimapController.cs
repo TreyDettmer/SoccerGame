@@ -53,10 +53,10 @@ public class MinimapController : MonoBehaviour
         }
     }
 
-    public void CreatePlayerCanvasPrefab(PlayerController playerController, Color color)
+    public void CreatePlayerCanvasPrefab(Player player, Color color)
     {
-        playerControllerTransforms.Add(playerController.transform);
-        GameObject instancedPlayerCanvas = Instantiate(playerCanvasPrefab, new Vector3(playerController.transform.position.x, 60f, playerController.transform.position.z), ballCanvas.rotation,transform);
+        playerControllerTransforms.Add(player.transform);
+        GameObject instancedPlayerCanvas = Instantiate(playerCanvasPrefab, new Vector3(player.transform.position.x, 60f, player.transform.position.z), ballCanvas.rotation,transform);
         playerCanvasTransforms.Add(instancedPlayerCanvas.transform);
         instancedPlayerCanvas.GetComponentInChildren<RawImage>().color = color;
     }

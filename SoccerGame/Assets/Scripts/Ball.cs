@@ -15,8 +15,8 @@ public class Ball : MonoBehaviour
 
     private int collidedObjectCount = 0;
 
-    public PlayerController lastKickedBy;
-    public PlayerController owner;
+    public Player lastKickedBy;
+    public Player owner;
 
     // Start is called before the first frame update
     void Start()
@@ -72,11 +72,11 @@ public class Ball : MonoBehaviour
         }
     }
 
-    public void SetOwner(PlayerController playerController)
+    public void SetOwner(Player player)
     {
-        if (playerController != null)
+        if (player != null)
         {
-            owner = playerController;
+            owner = player;
             rb.velocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
             transform.parent = owner.transform;

@@ -13,6 +13,8 @@ public class GameplayGui : MonoBehaviour
     TextMeshProUGUI scoreLabel;
     [SerializeField]
     TextMeshProUGUI countdownLabel;
+    [SerializeField]
+    RectTransform goalLabelTransform;
 
     private void Awake()
     {
@@ -51,6 +53,19 @@ public class GameplayGui : MonoBehaviour
     public void UpdateCountdown(string newText)
     {
         countdownLabel.text = newText;
+    }
+
+    public IEnumerator GoalLabelRoutine(float duration)
+    {
+        float t = 0f;
+        while (t < 1f)
+        {
+            t += Time.unscaledDeltaTime / duration;
+            float val = Mathf.Lerp(0f, 1600f, t) - 800f;
+            goalLabelTransform.anchoredPosition = new Vector2(val, goalLabelTransform.anchoredPosition.y);
+            yield return null;
+        }
+        goalLabelTransform.anchoredPosition = new Vector2(-800f, goalLabelTransform.anchoredPosition.y);
     }
 
 }

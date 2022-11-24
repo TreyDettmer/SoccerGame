@@ -35,20 +35,23 @@ public class InputManager : MonoBehaviour
 
     public void SpawnPlayer(PlayerInput playerInput)
     {
+
         Debug.Log("Adding player!");
         playerInputs.Add(playerInput);
         if (inputDevices[playerInputs.Count - 1].displayName == "Keyboard")
         {
-            GameplayManager.instance.SpawnPlayer(playerInput,PlayerController.ControllerType.Keyboard);
+            GameplayManager.instance.SpawnPlayer(playerInput, Player.ControllerType.Keyboard);
         }
         else if (inputDevices[playerInputs.Count - 1].displayName == "Xbox Controller")
         {
-            GameplayManager.instance.SpawnPlayer(playerInput, PlayerController.ControllerType.Xbox);
+            GameplayManager.instance.SpawnPlayer(playerInput, Player.ControllerType.Switch);
         }
         else
         {
-            GameplayManager.instance.SpawnPlayer(playerInput, PlayerController.ControllerType.Switch);
+            GameplayManager.instance.SpawnPlayer(playerInput, Player.ControllerType.Switch);
         }
+        
+
         
 
         
@@ -79,6 +82,8 @@ public class InputManager : MonoBehaviour
             isSplitScreen = true;
             playerInputManager.splitScreen = isSplitScreen;
         }
+
+
         for (int i = 0; i < inputDevices.Count; i++)
         {
             if (inputDevices[i].displayName == "Keyboard")
@@ -89,7 +94,9 @@ public class InputManager : MonoBehaviour
             {
                 playerInputManager.JoinPlayer(i, -1, "Gamepad", inputDevices[i]);
             }
+
         }
+
         
         
 

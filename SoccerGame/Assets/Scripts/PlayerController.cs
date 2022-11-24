@@ -7,17 +7,11 @@ using DG.Tweening;
 
 public class PlayerController : Player
 {
-    public enum ControllerType
-    {
-        Keyboard,
-        Xbox,
-        Switch
-    }
+
 
     [SerializeField]
     protected RawImage kickIndicatorImage;
-    [SerializeField]
-    public ControllerType controllerType = ControllerType.Xbox;
+
     protected Camera cam;
     protected FollowPlayer cameraFollowPlayer;
     protected PlayerGui cameraPlayerGui;
@@ -42,7 +36,12 @@ public class PlayerController : Player
 
     protected override void FixedUpdate()
     {
-        base.FixedUpdate();   
+        base.FixedUpdate();
+        if (playerState == PlayerState.Waiting)
+        {
+            myGoalie.Move(playerActionMap["Movement"].ReadValue<Vector2>().x);
+        }
+        
     }
 
     protected override void GetInput()
@@ -60,10 +59,8 @@ public class PlayerController : Player
             unitGoalVelocity = GetDirectionOfMovement(horizontalInput, verticalInput).normalized;
         }
         
-        
 
-        
-        
+
     }
 
 
@@ -239,16 +236,22 @@ public class PlayerController : Player
             {
                 if (hasBall)
                 {
+                    audioSource.Play();
                     Vector3 directionToBall = (ball.transform.position - transform.position).normalized;
-                    Vector3 curveDirection = (transform.right * horizontalInput).normalized;
-                    curveDirection.y = 0;
-                    curveDirection = curveDirection.normalized;
+                    Vector3 sideCurveDirection = (transform.right * horizontalInput).normalized;
+                    Vector3 topCurveDirection = (transform.forward * -verticalInput).normalized;
+                    sideCurveDirection.y = 0;
+                    sideCurveDirection = sideCurveDirection.normalized;
+                    topCurveDirection.x = 0;
+                    topCurveDirection = topCurveDirection.normalized;
                     directionToBall.y = 0;
                     directionToBall = directionToBall.normalized;
                     Vector3 forward = new Vector3(transform.forward.x, 0f, transform.forward.z).normalized;
-                    float dot = Vector3.SignedAngle(curveDirection, forward, Vector3.up);
-                    Debug.Log("Dot: " + dot);
-                    Vector3 torque = new Vector3(0f, -dot * kickSpinFactor, 0f);
+                    Vector3 right = new Vector3(transform.right.x, 0f, transform.right.z).normalized;
+                    float sideDot = Vector3.SignedAngle(sideCurveDirection, forward, Vector3.up);
+                    float topDot = Vector3.SignedAngle(topCurveDirection, right, Vector3.up);
+                    Debug.Log("SideDot: " + sideDot + " TopDot: " + topDot);
+                    Vector3 torque = new Vector3(-topDot * kickSpinFactor, -sideDot * kickSpinFactor, 0f);
 
                     ball.lastKickedBy = this;
                     ball.SetOwner(null);
@@ -258,6 +261,7 @@ public class PlayerController : Player
 
                     ballRb.AddForce(directionToBall * kickForce + new Vector3(0f, kickHeightForce, 0f), ForceMode.Impulse);
                     ballRb.AddTorque(torque, ForceMode.VelocityChange);
+                    
                 }
             }
 
@@ -288,114 +292,15 @@ public class PlayerController : Player
         //transform.DORotate(new Vector3(-90f, 0f, 0f), slideTime/4f,RotateMode.LocalAxisAdd);
     }
 
-    IEnumerator SlideRoutine()
-    {
-        yield return new WaitForSeconds(slideTime * .75f);
-        //transform.DORotate(new Vector3(90f, 0f, 0f), slideTime / 4f, RotateMode.LocalAxisAdd);
-        yield return new WaitForSeconds(slideTime * .25f);
-        EndSlide();
-    }
-
-    IEnumerator SlideCooldownRoutine()
-    {
-        yield return new WaitForSeconds(slideCooldownTime);
-        canSlide = true;
-    }
-
-    public void EndSlide()
-    {
-        //animator.SetBool("isSliding", false);
-
-        slidIntoBall = false;
-        isSliding = false;
-        if (shouldBePenalized)
-        {
-            shouldBePenalized = false;
-            UpdatePlayerState(PlayerState.Penalized);
-        }
-        canSlide = false;
-        StartCoroutine(SlideCooldownRoutine());
-    }
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (collision.collider.gameObject.layer == LayerMask.NameToLayer("Ball"))
-        {
-            if (isSliding)
-            {
-                slidIntoBall = true;
-            }
-            if (!hasBall)
-            {
-                if (ball.owner == null)
-                {
-
-                }
-                else if (ball.owner != this)
-                {
-                    ball.owner.BallStolen();
-                    StartCoroutine(BallPickupCooldownRoutine());
-                    //hasBall = true;
-                    //ball.SetOwner(this);
-                    //Debug.Log("New owner");
-                }
 
 
-            }
 
-        }
-        if (collision.collider.gameObject.layer == LayerMask.NameToLayer("Player"))
-        {
-            if (collision.collider.GetComponent<PlayerController>())
-            {
-                if (collision.collider.GetComponent<PlayerController>().teamIndex != teamIndex)
-                {
-                    if (isSliding && slidIntoBall == false)
-                    {
-                        GameplayManager.instance.PlayerFoul(this, collision.collider.GetComponent<PlayerController>());
-                        Debug.Log("Foul on team " + teamIndex);
-                    }
-                }
-            }
 
-        }
-    }
 
-    public void UpdatePlayerState(PlayerState newState)
-    {
-        if (newState == PlayerState.Penalized)
-        {
-            if (playerState != PlayerState.Penalized)
-            {
-                if (isSliding)
-                {
-                    shouldBePenalized = true;
-                    return;
-                }
-                playerState = PlayerState.Penalized;
-                meshRenderer.material = penalizedMaterial;
-                gameObject.layer = LayerMask.NameToLayer("PlayerPenalized");
-                StartCoroutine(PenaltyTimeoutRoutine());
-                
 
-            }
-        }
-        else if (newState == PlayerState.Playing)
-        {
-            if (playerState != PlayerState.Playing)
-            {
-                gameObject.layer = LayerMask.NameToLayer("Player");
-                meshRenderer.material = playingMaterial;
-                playerState = PlayerState.Playing;
-            }
-        }
-        else if (newState == PlayerState.Waiting)
-        {
-            playerState = PlayerState.Waiting;
-            gameObject.layer = LayerMask.NameToLayer("Player");
-            meshRenderer.material = playingMaterial;
-        }
-    }
+   
+
+    
 
     public void ToggleChipMode(InputAction.CallbackContext context)
     {
@@ -425,60 +330,18 @@ public class PlayerController : Player
         }
     }
 
-    public void UpdateMaterial()
+
+
+
+
+
+
+
+
+
+    public override void ResetValues()
     {
-
-        meshRenderer.material = playingMaterial;    
-    }
-
-    public bool CheckIfCanDribble()
-    {
-        if ((ball.transform.position - transform.position).sqrMagnitude <= ballcanDribbleDistance)
-        {
-            Vector3 dir = (ball.transform.position - transform.position).normalized;
-            dir.y = 0;
-            dir = dir.normalized * 3f;
-            Vector3 forward = new Vector3(transform.forward.x, 0f, transform.forward.z).normalized;
-            float angle = Vector3.SignedAngle(forward, dir.normalized, Vector3.up);
-            if (angle >= -ballcanDribbleAngle && angle <= ballcanDribbleAngle)
-            {
-                if (Mathf.Abs(ball.transform.position.y - transform.position.y) < 1f)
-                {
-                    return true;
-                }
-                
-
-            }
-
-        }
-        return false;
-    }
-    IEnumerator PenaltyTimeoutRoutine()
-    {
-        yield return new WaitForSeconds(penaltyTime);
-        UpdatePlayerState(PlayerState.Playing);
-    }
-
-    public void BallStolen()
-    {
-
-        ball.SetOwner(null);
-        hasBall = false;
-        StartCoroutine(BallPickupCooldownRoutine());
-    }
-
-    IEnumerator BallPickupCooldownRoutine()
-    {
-        canDribble = false;
-        yield return new WaitForSeconds(ballcanDribbleCooldown);
-        canDribble = true;
-
-    }
-
-    public void ResetValues()
-    {
-        hasBall = false;
-        canDribble = true;
+        base.ResetValues();
         cam.transform.position = transform.position + -transform.forward * 3f + Vector3.up * 2f;
     }
 }

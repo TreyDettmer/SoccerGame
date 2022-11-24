@@ -7,6 +7,14 @@ using UnityEngine;
 public class Player : MonoBehaviour
 {
 
+    public enum ControllerType
+    {
+        Keyboard,
+        Xbox,
+        Switch,
+        AI
+    }
+
     public enum PlayerState
     {
         Penalized,
@@ -24,6 +32,7 @@ public class Player : MonoBehaviour
     protected float maxAccelForceFactor = 1f;
     public Vector3 forceScale;
     public float rotationSpeed = 1f;
+    public float kickingRotationSpeed = 0.8f;
     protected Vector3 goalVelocity = Vector3.zero;
     protected Vector3 unitGoalVelocity;
     public AnimationCurve AccelerationFactorFromDot;
@@ -98,6 +107,10 @@ public class Player : MonoBehaviour
     protected Quaternion goalRotation;
     protected bool isJumping = false;
 
+    [SerializeField]
+    public ControllerType controllerType = ControllerType.Xbox;
+    protected Goalie myGoalie;
+
 
 
     protected PlayerState playerState;
@@ -110,6 +123,8 @@ public class Player : MonoBehaviour
     public Material playingMaterial;
     public Material penalizedMaterial;
 
+    protected AudioSource audioSource;
+
 
 
 
@@ -121,6 +136,16 @@ public class Player : MonoBehaviour
         currentMaxSpeed = maxSpeed;
         ball = FindObjectOfType<Ball>();
         ballRb = ball.GetComponent<Rigidbody>();
+        audioSource = GetComponent<AudioSource>();
+        Goalie[] goalieObjects = FindObjectsOfType<Goalie>();
+        for (int i = 0; i < goalieObjects.Length; i++)
+        {
+            if (goalieObjects[i].teamIndex == teamIndex)
+            {
+                myGoalie = goalieObjects[i];
+            }
+        }
+        
     }
 
     // Update is called once per frame
@@ -148,7 +173,15 @@ public class Player : MonoBehaviour
                 goalRotation = Quaternion.LookRotation(unitGoalVelocity, Vector3.up);
                 Vector3 motionDirection = GetDirectionOfMovement(horizontalInput, verticalInput).normalized;
                 Quaternion toRotation = Quaternion.LookRotation(motionDirection, Vector3.up);
-                transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, rotationSpeed * Time.deltaTime);
+                if (isKicking)
+                {
+                    transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, kickingRotationSpeed * Time.deltaTime);
+                }
+                else
+                {
+                    transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, rotationSpeed * Time.deltaTime);
+                }
+                
             }
 
 
@@ -214,5 +247,171 @@ public class Player : MonoBehaviour
     public virtual void EndKick()
     {
 
+    }
+
+    public virtual void UpdateMaterial()
+    {
+
+        meshRenderer.material = playingMaterial;
+    }
+
+    public virtual void ResetValues()
+    {
+        hasBall = false;
+        canDribble = true;
+    }
+
+    public virtual void UpdatePlayerState(PlayerState newState)
+    {
+        if (newState == PlayerState.Penalized)
+        {
+            if (playerState != PlayerState.Penalized)
+            {
+                if (isSliding)
+                {
+                    shouldBePenalized = true;
+                    return;
+                }
+                playerState = PlayerState.Penalized;
+                meshRenderer.material = penalizedMaterial;
+                gameObject.layer = LayerMask.NameToLayer("PlayerPenalized");
+                StartCoroutine(PenaltyTimeoutRoutine());
+
+
+            }
+        }
+        else if (newState == PlayerState.Playing)
+        {
+            if (playerState != PlayerState.Playing)
+            {
+                gameObject.layer = LayerMask.NameToLayer("Player");
+                meshRenderer.material = playingMaterial;
+                playerState = PlayerState.Playing;
+            }
+        }
+        else if (newState == PlayerState.Waiting)
+        {
+            playerState = PlayerState.Waiting;
+            gameObject.layer = LayerMask.NameToLayer("Player");
+            meshRenderer.material = playingMaterial;
+        }
+    }
+
+    protected IEnumerator PenaltyTimeoutRoutine()
+    {
+        yield return new WaitForSeconds(penaltyTime);
+        UpdatePlayerState(PlayerState.Playing);
+    }
+
+    public bool CheckIfCanDribble()
+    {
+        if ((ball.transform.position - transform.position).sqrMagnitude <= ballcanDribbleDistance)
+        {
+            Vector3 dir = (ball.transform.position - transform.position).normalized;
+            dir.y = 0;
+            dir = dir.normalized * 3f;
+            Vector3 forward = new Vector3(transform.forward.x, 0f, transform.forward.z).normalized;
+            float angle = Vector3.SignedAngle(forward, dir.normalized, Vector3.up);
+            if (angle >= -ballcanDribbleAngle && angle <= ballcanDribbleAngle)
+            {
+                if (Mathf.Abs(ball.transform.position.y - transform.position.y) < 1f)
+                {
+                    return true;
+                }
+
+
+            }
+
+        }
+        return false;
+    }
+
+    public void BallStolen()
+    {
+
+        ball.SetOwner(null);
+        hasBall = false;
+        StartCoroutine(BallPickupCooldownRoutine());
+    }
+
+    protected IEnumerator BallPickupCooldownRoutine()
+    {
+        canDribble = false;
+        yield return new WaitForSeconds(ballcanDribbleCooldown);
+        canDribble = true;
+
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.collider.gameObject.layer == LayerMask.NameToLayer("Ball"))
+        {
+            if (isSliding)
+            {
+                slidIntoBall = true;
+            }
+            if (!hasBall)
+            {
+                if (ball.owner == null)
+                {
+
+                }
+                else if (ball.owner != this)
+                {
+                    ball.owner.BallStolen();
+                    StartCoroutine(BallPickupCooldownRoutine());
+                    //hasBall = true;
+                    //ball.SetOwner(this);
+                    //Debug.Log("New owner");
+                }
+
+
+            }
+
+        }
+        if (collision.collider.gameObject.layer == LayerMask.NameToLayer("Player"))
+        {
+            if (collision.collider.GetComponent<PlayerController>())
+            {
+                if (collision.collider.GetComponent<PlayerController>().teamIndex != teamIndex)
+                {
+                    if (isSliding && slidIntoBall == false)
+                    {
+                        GameplayManager.instance.PlayerFoul(this, collision.collider.GetComponent<PlayerController>());
+                        Debug.Log("Foul on team " + teamIndex);
+                    }
+                }
+            }
+
+        }
+    }
+
+    public void EndSlide()
+    {
+        //animator.SetBool("isSliding", false);
+
+        slidIntoBall = false;
+        isSliding = false;
+        if (shouldBePenalized)
+        {
+            shouldBePenalized = false;
+            UpdatePlayerState(PlayerState.Penalized);
+        }
+        canSlide = false;
+        StartCoroutine(SlideCooldownRoutine());
+    }
+
+    protected IEnumerator SlideCooldownRoutine()
+    {
+        yield return new WaitForSeconds(slideCooldownTime);
+        canSlide = true;
+    }
+
+    protected IEnumerator SlideRoutine()
+    {
+        yield return new WaitForSeconds(slideTime * .75f);
+        //transform.DORotate(new Vector3(90f, 0f, 0f), slideTime / 4f, RotateMode.LocalAxisAdd);
+        yield return new WaitForSeconds(slideTime * .25f);
+        EndSlide();
     }
 }

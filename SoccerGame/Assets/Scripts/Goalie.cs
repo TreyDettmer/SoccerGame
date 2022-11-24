@@ -2,17 +2,19 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Goal : MonoBehaviour
+public class Goalie : MonoBehaviour
 {
-    public int teamIndex = 0;
-    public bool isEnabled = true;
+    private Rigidbody rb;
+    private float desiredXOffset = 0f;
+    public int teamIndex = -1;
+    public float movementSpeed = .5f;
+    public float movementRange = 4f;
     protected Ball ball;
-    protected AudioSource audioSource;
     // Start is called before the first frame update
     void Start()
     {
+        rb = GetComponent<Rigidbody>();
         ball = FindObjectOfType<Ball>();
-        audioSource = GetComponent<AudioSource>();
     }
 
     // Update is called once per frame
@@ -21,13 +23,15 @@ public class Goal : MonoBehaviour
         
     }
 
-    private void OnTriggerEnter(Collider other)
+    public void Move(float value)
     {
-        if (isEnabled && other.gameObject.layer == LayerMask.NameToLayer("Ball"))
-        {
-            GameplayManager.instance.GoalScored(teamIndex);
-        }
-        
+        desiredXOffset += (value * movementSpeed);
+        desiredXOffset = Mathf.Clamp(desiredXOffset, -movementRange, movementRange);   
+    }
+
+    private void FixedUpdate()
+    {
+        rb.MovePosition(new Vector3(desiredXOffset, rb.position.y, rb.position.z));
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -38,7 +42,7 @@ public class Goal : MonoBehaviour
 
             if (ball.owner == null)
             {
-                audioSource.Play();
+
             }
             else if (ball.owner != this)
             {
@@ -46,7 +50,7 @@ public class Goal : MonoBehaviour
             }
 
 
-
+         
 
         }
     }
