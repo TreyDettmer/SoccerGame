@@ -7,10 +7,10 @@ using UnityEngine.UI;
 public class FollowPlayer : MonoBehaviour
 {
 
-    public Player player;
+    public PlayerController player;
     private List<Transform> targets = new List<Transform>();
 
-    private Vector3 cameraOffset;
+    public Vector3 cameraOffset;
     private float yAngle = 0f;
     private float xAngle = 0f;
     public float minYOffset = -10f;
@@ -19,7 +19,6 @@ public class FollowPlayer : MonoBehaviour
 
     [Range(0.01f,1.0f)]
     public float smoothFactor = 0.125f;
-    public Vector3 offset;
     private Vector3 velocity;
     public bool lookInOppositeDirection = false;
 
@@ -41,7 +40,16 @@ public class FollowPlayer : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        cameraOffset = transform.position - player.transform.position;
+
+    }
+
+    public void OnGameplayStart()
+    {
+        if (player.teamIndex == 1)
+        {
+            cameraOffset.z *= -1;
+        }
+
         targets.Add(player.transform);
         ballTransform = FindObjectOfType<Ball>().transform;
         targets.Add(ballTransform);
@@ -58,6 +66,10 @@ public class FollowPlayer : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (player.gameState != PlayerController.GameState.Gameplay)
+        {
+            return;
+        }
         Vector3 newPos = player.transform.position + cameraOffset;
         float ballDiff = Mathf.Abs(ballTransform.position.z - transform.position.z);
         float playerDiff = Mathf.Abs(player.transform.position.z - transform.position.z);

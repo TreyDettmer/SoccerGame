@@ -81,12 +81,14 @@ public class Ball : MonoBehaviour
             rb.angularVelocity = Vector3.zero;
             transform.parent = owner.transform;
             rb.isKinematic = true;
+            GameplayManager.instance.UpdateTeamWithBall(player.teamIndex);
         }
         else
         {
             rb.isKinematic = false;
             transform.parent = null;
             owner = null;
+            GameplayManager.instance.UpdateTeamWithBall(-1);
         }
         
     }

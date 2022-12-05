@@ -252,7 +252,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7352912024129578634}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
   m_Name: 
@@ -462,6 +462,86 @@ MonoBehaviour:
         m_CallState: 2
     m_ActionId: 5ac2497f-4157-4f31-b9bf-c14be49f6fd2
     m_ActionName: Player/Dribble[/Keyboard/f,/XInputControllerWindows/leftTrigger]
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 0}
+        m_TargetAssemblyTypeName: PlayerController, Assembly-CSharp
+        m_MethodName: MoveLeft
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 8fffee8d-5651-48a4-814f-3e0e4d64a909
+    m_ActionName: SelectSides/MoveLeft[/XInputControllerWindows/leftStick/left,/Keyboard/a]
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 0}
+        m_TargetAssemblyTypeName: PlayerController, Assembly-CSharp
+        m_MethodName: MoveRight
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 4e25c815-0059-4656-99d1-e946f46b200a
+    m_ActionName: SelectSides/MoveRight[/XInputControllerWindows/leftStick/right,/Keyboard/d]
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 0}
+        m_TargetAssemblyTypeName: PlayerController, Assembly-CSharp
+        m_MethodName: ReadyUp
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: e5898ae9-cfc0-43e5-a2e6-11d2764bb137
+    m_ActionName: SelectSides/ReadyUp[/XInputControllerWindows/buttonSouth,/Keyboard/space]
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 0}
+        m_TargetAssemblyTypeName: PlayerController, Assembly-CSharp
+        m_MethodName: MoveDown
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 3f648e07-aea2-4292-8c4f-fe228cd3e9bf
+    m_ActionName: SelectSides/MoveDown[/XInputControllerWindows/leftStick/down,/Keyboard/s]
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 0}
+        m_TargetAssemblyTypeName: PlayerController, Assembly-CSharp
+        m_MethodName: MoveUp
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 1429a61b-40d9-42ce-849d-55ddc3be4197
+    m_ActionName: SelectSides/MoveUp[/XInputControllerWindows/leftStick/up,/Keyboard/w]
   m_NeverAutoSwitchControlSchemes: 1
   m_DefaultControlScheme: 
   m_DefaultActionMap: Player
@@ -517,7 +597,7 @@ MonoBehaviour:
   maxAccelForce: 700
   forceScale: {x: 1, y: 0, z: 1}
   rotationSpeed: 350
-  kickingRotationSpeed: 150
+  kickingRotationSpeed: 350
   AccelerationFactorFromDot:
     serializedVersion: 2
     m_Curve:
@@ -639,8 +719,8 @@ MonoBehaviour:
       inWeight: 0
       outWeight: 0
     - serializedVersion: 3
-      time: 0.86495525
-      value: 0.48341653
+      time: 0.9375871
+      value: 0.38011453
       inSlope: 0.023897013
       outSlope: 0.023897013
       tangentMode: 0
@@ -650,11 +730,11 @@ MonoBehaviour:
     - serializedVersion: 3
       time: 1
       value: 1
-      inSlope: 2
-      outSlope: 2
+      inSlope: 4.4651875
+      outSlope: 4.4651875
       tangentMode: 0
       weightedMode: 0
-      inWeight: 0
+      inWeight: 0.79916453
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
@@ -750,10 +830,18 @@ MonoBehaviour:
     m_Bits: 576
   groundChecker: {fileID: 7352912024676512674}
   controllerType: 3
+  teammates: []
+  opponents: []
   teamIndex: -1
   meshRenderer: {fileID: 7352912024463494778}
   playingMaterial: {fileID: 0}
   penalizedMaterial: {fileID: 0}
+  aiState: 0
+  detectionRadius: 20
+  shotPlacementMaxXOffset: 3.8
+  shotPlacementMaxYHeight: 3.3
+  shotPlacementStep: 3
+  shotClearanceNeeded: 1
 --- !u!82 &8812403963911109665
 AudioSource:
   m_ObjectHideFlags: 0

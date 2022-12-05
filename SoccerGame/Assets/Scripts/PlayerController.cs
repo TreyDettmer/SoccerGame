@@ -7,6 +7,13 @@ using DG.Tweening;
 
 public class PlayerController : Player
 {
+    public enum GameState
+    {
+        SelectSides,
+        Gameplay
+    }
+
+    public GameState gameState = GameState.SelectSides;
 
 
     [SerializeField]
@@ -17,77 +24,108 @@ public class PlayerController : Player
     protected PlayerGui cameraPlayerGui;
 
     protected InputActionAsset playerInputAsset;
-    protected InputActionMap playerActionMap;
+    protected InputActionMap gameplayActionMap;
+    
+    protected PlayerInput playerInput;
+
+    #region Select Sides Code
+    protected InputActionMap selectSidesActionMap;
+    [Header("GUI - Select Sides")]
+    float previousMovementTime = 0f;
+    // guiSection 1 means selecting sides, guiSection 2 means selecting AI count
+    public int guiSection = 1;
+    public Color color;
+    #endregion
 
     private void Awake()
     {
-        playerInputAsset = GetComponent<PlayerInput>().actions;
-        playerActionMap = playerInputAsset.FindActionMap("Player");
+
+        Rb = GetComponent<Rigidbody>();
+        playerInput = GetComponent<PlayerInput>();
+        playerInputAsset = playerInput.actions;
+        gameplayActionMap = playerInputAsset.FindActionMap("Player");
+        gameplayActionMap.Disable();
+        selectSidesActionMap = playerInputAsset.FindActionMap("SelectSides");
         cam = transform.parent.GetComponentInChildren<Camera>();
         cameraFollowPlayer = cam.GetComponent<FollowPlayer>();
         cameraPlayerGui = cam.GetComponent<PlayerGui>();
         animator = GetComponent<Animator>();
+        DontDestroyOnLoad(transform.parent.gameObject);
     }
+
+
+    public void UpdateGameState(GameState _gameState)
+    {
+        if (gameState == _gameState)
+        {
+            return;
+        }
+        if (_gameState == GameState.Gameplay)
+        {
+            cam = transform.parent.GetComponentInChildren<Camera>();
+            cameraFollowPlayer = cam.GetComponent<FollowPlayer>();
+            cameraFollowPlayer.OnGameplayStart();
+            
+            base.Start();
+            playerInput = GetComponent<PlayerInput>();
+            playerInputAsset = playerInput.actions;
+            gameplayActionMap = playerInputAsset.FindActionMap("Player");
+            selectSidesActionMap = playerInputAsset.FindActionMap("SelectSides");
+            selectSidesActionMap.Disable();
+            cameraPlayerGui = cam.GetComponent<PlayerGui>();
+            animator = GetComponent<Animator>();
+            gameState = GameState.Gameplay;
+            gameplayActionMap.Enable();
+        }
+    }
+
 
     protected override void Start()
     {
-        base.Start();
+        
     }
 
     protected override void FixedUpdate()
     {
-        base.FixedUpdate();
-        if (playerState == PlayerState.Waiting)
+        if (gameState == GameState.Gameplay)
         {
-            myGoalie.Move(playerActionMap["Movement"].ReadValue<Vector2>().x);
+            base.FixedUpdate();
         }
-        
     }
 
-    protected override void GetInput()
+    protected void GetInput()
     {
-        Vector2 direction = playerActionMap["Movement"].ReadValue<Vector2>();
+        Vector2 direction = gameplayActionMap["Movement"].ReadValue<Vector2>();
         verticalInput = direction.y;
         horizontalInput = direction.x;
 
         if (isKicking)
         {
-            unitGoalVelocity = GetDirectionOfMovement(0f, verticalInput).normalized;
+            //unitGoalVelocity = GetDirectionOfMovement(0f, verticalInput).normalized;
         }
         else
         {
             unitGoalVelocity = GetDirectionOfMovement(horizontalInput, verticalInput).normalized;
         }
-        
-
-
     }
 
 
 
 
-    public void ToggleSprint(InputAction.CallbackContext context)
-    {
-        if (context.canceled)
-        {
-            isSprinting = false;
-        }
-        else
-        {
-            isSprinting = true;
-        }
-    }
+
 
 
     private void OnEnable()
     {
-        playerActionMap.Enable();
+        selectSidesActionMap.Enable();
+        gameplayActionMap.Enable();
     }
 
 
     private void OnDisable()
     {
-        playerActionMap.Disable();
+        gameplayActionMap.Disable();
+        selectSidesActionMap.Disable();
     }
 
 
@@ -101,95 +139,96 @@ public class PlayerController : Player
         right = right.normalized;
         Vector3 forwardRelativeVerticalInput = _verticalInput * forward;
         Vector3 rightRelativeHorizontalInput = _horizontalInput * right;
-
-        
+     
         return forwardRelativeVerticalInput + rightRelativeHorizontalInput;
-        
-        
     }
 
 
     // Update is called once per frame
     protected override void Update()
     {
-        base.Update();
-        // if we do not have the ball
-        if (!hasBall)
+        if (gameState == GameState.Gameplay)
         {
-            // check if the ball is in a dribblable position
-            if (CheckIfCanDribble())
+
+
+            base.Update();
+            // if we do not have the ball
+            if (!hasBall)
             {
-                // check if ball isn't being dribbled by someone else
-                if (ball.owner == null)
+                // check if the ball is in a dribblable position
+                if (CheckIfCanDribble())
                 {
-                    // ensure that we are not sliding
-                    if (!isSliding)
+                    // check if ball isn't being dribbled by someone else
+                    if (ball.owner == null)
                     {
-                        // ensure that we are not being penalized for fouling
-                        if (playerState != PlayerState.Penalized)
+                        // ensure that we are not sliding
+                        if (!isSliding)
                         {
-                            // check if it's been long enough since we last had the ball
-                            if (canDribble)
+                            // ensure that we are not being penalized for fouling
+                            if (playerState != PlayerState.Penalized)
                             {
-                                hasBall = true;
-                                ball.SetOwner(this);
-                                Debug.Log("New owner");
-                                ball.transform.position = transform.position + transform.forward * 1.5f;
+                                // check if it's been long enough since we last had the ball
+                                if (CanDribble)
+                                {
+                                    hasBall = true;
+                                    ball.SetOwner(this);
+                                    Debug.Log("New owner");
+                                    ball.transform.position = transform.position + transform.forward * 1.5f;
+                                }
                             }
+
                         }
 
                     }
-
                 }
             }
-        }
-        if (isKicking)
-        {
-            kickBackswingElapsedTime += Time.deltaTime;
-            float kickPowerCurveValue;
-            if (chipModeEnabled)
+            if (isKicking)
             {
-                kickPowerCurveValue = chipPowerCurve.Evaluate(kickBackswingElapsedTime / maxKickBackswingTime);
-            }
-            else
-            {
-                kickPowerCurveValue = kickPowerCurve.Evaluate(kickBackswingElapsedTime / maxKickBackswingTime);
-            }
-            
-            kickForce = kickPowerFactor * kickPowerCurveValue;
-            float kickHeightCurveValue;
-            if (chipModeEnabled)
-            {
-                kickHeightCurveValue = chipHeightCurve.Evaluate(kickBackswingElapsedTime / maxKickBackswingTime);
-            }
-            else
-            {
-                kickHeightCurveValue = kickHeightCurve.Evaluate(kickBackswingElapsedTime / maxKickBackswingTime);
-            }
-            kickHeightForce = kickHeightFactor * kickHeightCurveValue;
-            cameraPlayerGui.UpdatePowerMeter(kickBackswingElapsedTime / maxKickBackswingTime);
-            if (kickBackswingElapsedTime >= maxKickBackswingTime)
-            {
-                EndKick();
-            }
-        }
+                kickBackswingElapsedTime += Time.deltaTime;
+                float kickPowerCurveValue;
+                if (chipModeEnabled)
+                {
+                    kickPowerCurveValue = chipPowerCurve.Evaluate(kickBackswingElapsedTime / maxKickBackswingTime);
+                }
+                else
+                {
+                    kickPowerCurveValue = kickPowerCurve.Evaluate(kickBackswingElapsedTime / maxKickBackswingTime);
+                }
 
+                kickForce = kickPowerFactor * kickPowerCurveValue;
+                float kickHeightCurveValue;
+                if (chipModeEnabled)
+                {
+                    kickHeightCurveValue = chipHeightCurve.Evaluate(kickBackswingElapsedTime / maxKickBackswingTime);
+                }
+                else
+                {
+                    kickHeightCurveValue = kickHeightCurve.Evaluate(kickBackswingElapsedTime / maxKickBackswingTime);
+                }
+                kickHeightForce = kickHeightFactor * kickHeightCurveValue;
+                cameraPlayerGui.UpdatePowerMeter(kickBackswingElapsedTime / maxKickBackswingTime);
+                if (kickBackswingElapsedTime >= maxKickBackswingTime)
+                {
+                    EndKick();
+                }
+            }
 
+        }
 
     }
 
 
     public void OnJump(InputAction.CallbackContext context)
     {
-        if (isGrounded && playerState == PlayerState.Playing)
+        if (IsGrounded && playerState == PlayerState.Playing)
         {
             if (hasBall)
             {
                 BallStolen();
             }
-            isGrounded = false;
+            IsGrounded = false;
             isJumping = true;
-            rb.velocity = new Vector3(rb.velocity.x, jumpForce, rb.velocity.z);
+            Rb.velocity = new Vector3(Rb.velocity.x, jumpForce, Rb.velocity.z);
         }
     }
 
@@ -211,12 +250,7 @@ public class PlayerController : Player
     public override void StartKick()
     {
         base.StartKick();
-        if (!isKicking && !isSliding)
-        {
-            Debug.Log("Starting kick");
-            isKicking = true;
-            canKick = false;
-        }
+
 
     }
 
@@ -225,58 +259,13 @@ public class PlayerController : Player
     public override void EndKick()
     {
         base.EndKick();
-        if (!isKicking)
-        {
-            return;
-        }
-
-        if (ball != null)
-        {
-            if (CheckIfCanDribble())
-            {
-                if (hasBall)
-                {
-                    audioSource.Play();
-                    Vector3 directionToBall = (ball.transform.position - transform.position).normalized;
-                    Vector3 sideCurveDirection = (transform.right * horizontalInput).normalized;
-                    Vector3 topCurveDirection = (transform.forward * -verticalInput).normalized;
-                    sideCurveDirection.y = 0;
-                    sideCurveDirection = sideCurveDirection.normalized;
-                    topCurveDirection.x = 0;
-                    topCurveDirection = topCurveDirection.normalized;
-                    directionToBall.y = 0;
-                    directionToBall = directionToBall.normalized;
-                    Vector3 forward = new Vector3(transform.forward.x, 0f, transform.forward.z).normalized;
-                    Vector3 right = new Vector3(transform.right.x, 0f, transform.right.z).normalized;
-                    float sideDot = Vector3.SignedAngle(sideCurveDirection, forward, Vector3.up);
-                    float topDot = Vector3.SignedAngle(topCurveDirection, right, Vector3.up);
-                    Debug.Log("SideDot: " + sideDot + " TopDot: " + topDot);
-                    Vector3 torque = new Vector3(-topDot * kickSpinFactor, -sideDot * kickSpinFactor, 0f);
-
-                    ball.lastKickedBy = this;
-                    ball.SetOwner(null);
-                    hasBall = false;
-                    StartCoroutine(BallPickupCooldownRoutine());
-                    ballRb.AddForce(directionToBall * kickForce + new Vector3(0f, kickHeightForce, 0f), ForceMode.Impulse);
-
-                    ballRb.AddForce(directionToBall * kickForce + new Vector3(0f, kickHeightForce, 0f), ForceMode.Impulse);
-                    ballRb.AddTorque(torque, ForceMode.VelocityChange);
-                    
-                }
-            }
-
-        }
-
-
-
         cameraPlayerGui.UpdatePowerMeter(0f);
-        isKicking = false;
-        kickBackswingElapsedTime = 0f;
+
     }
 
     public void Slide(InputAction.CallbackContext context)
     {  
-        if (isSliding || context.canceled || !isGrounded || playerState != PlayerState.Playing || !canSlide || hasBall)
+        if (isSliding || context.canceled || !IsGrounded || playerState != PlayerState.Playing || !canSlide || hasBall)
         {
             return;
         }
@@ -344,4 +333,72 @@ public class PlayerController : Player
         base.ResetValues();
         cam.transform.position = transform.position + -transform.forward * 3f + Vector3.up * 2f;
     }
+
+    #region Select Sides Code
+
+    public void MoveLeft(InputAction.CallbackContext context)
+    {
+        if (SelectSidesGui.instance == null)
+        {
+            return;
+        }
+        if (Time.time - previousMovementTime > .25f)
+        {
+            previousMovementTime = Time.time;
+            SelectSidesGui.instance.PlayerMovedLeftOrRight(this, playerInput, true, guiSection);
+        }
+
+    }
+    public void MoveRight(InputAction.CallbackContext context)
+    {
+        if (SelectSidesGui.instance == null)
+        {
+            return;
+        }
+        if (Time.time - previousMovementTime > .25f)
+        {
+            previousMovementTime = Time.time;
+            SelectSidesGui.instance.PlayerMovedLeftOrRight(this, playerInput, false, guiSection);
+        }
+    }
+
+    public void MoveUp(InputAction.CallbackContext context)
+    {
+        if (SelectSidesGui.instance == null)
+        {
+            return;
+        }
+        if (Time.time - previousMovementTime > .25f)
+        {
+            previousMovementTime = Time.time;
+            SelectSidesGui.instance.PlayerMovedUpOrDown(this, playerInput, true, guiSection);
+        }
+    }
+
+    public void MoveDown(InputAction.CallbackContext context)
+    {
+        if (SelectSidesGui.instance == null)
+        {
+            return;
+        }
+        if (Time.time - previousMovementTime > .25f)
+        {
+            previousMovementTime = Time.time;
+            SelectSidesGui.instance.PlayerMovedUpOrDown(this, playerInput, false, guiSection);
+        }
+    }
+
+    public void ReadyUp(InputAction.CallbackContext context)
+    {
+        if (!context.canceled)
+        {
+            if (SelectSidesGui.instance == null)
+            {
+                return;
+            }
+            SelectSidesGui.instance.PlayerReadiedUp(this, playerInput, true);
+        }
+    }
+    #endregion
+
 }

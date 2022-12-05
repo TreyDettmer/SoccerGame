@@ -5,22 +5,26 @@ using UnityEngine.InputSystem;
 
 public class InputManager : MonoBehaviour
 {
+    public static InputManager instance;
     private List<PlayerInput> playerInputs = new List<PlayerInput>();
-
-    [SerializeField]
-    private GameObject playerObjectPrefab;
     PlayerInputManager playerInputManager;
-    List<InputDevice> inputDevices;
-    bool isSplitScreen = false;
-    public bool isLocalMultiplayer = false;
+
 
 
 
     private void Awake()
     {
-
-        playerInputManager = FindObjectOfType<PlayerInputManager>();
-        playerInputManager.playerPrefab = playerObjectPrefab;
+        if (instance == null)
+        {
+            instance = this;
+            playerInputManager = FindObjectOfType<PlayerInputManager>();
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+            return;
+        }
     }
 
     private void OnEnable()
@@ -37,68 +41,32 @@ public class InputManager : MonoBehaviour
     {
 
         Debug.Log("Adding player!");
-        playerInputs.Add(playerInput);
-        if (inputDevices[playerInputs.Count - 1].displayName == "Keyboard")
+        if (SelectSidesGui.instance != null)
         {
-            GameplayManager.instance.SpawnPlayer(playerInput, Player.ControllerType.Keyboard);
-        }
-        else if (inputDevices[playerInputs.Count - 1].displayName == "Xbox Controller")
-        {
-            GameplayManager.instance.SpawnPlayer(playerInput, Player.ControllerType.Switch);
+            SelectSidesGui.instance.PlayerJoined(playerInput);
         }
         else
         {
-            GameplayManager.instance.SpawnPlayer(playerInput, Player.ControllerType.Switch);
+            // we are not in the select sides scene so we use the GameplayManager 
+            GameplayManager.instance.PlayerJoined(playerInput);
         }
-        
+    }
 
-        
-
-        
+    public void DisableJoining(bool shouldDisable = true)
+    {
+        if (shouldDisable)
+        {
+            playerInputManager.DisableJoining();
+        }
+        else
+        {
+            playerInputManager.EnableJoining();
+        }
     }
 
     // Start is called before the first frame update
     void Start()
     {
-        
-        inputDevices = new List<InputDevice>();
-        if (!playerInputManager)
-        {
-            Debug.LogError("No PlayerInputManager detected");
-            return;
-        }
-        foreach (InputDevice device in InputSystem.devices)
-        {
-            // Mouse is not a valid controller
-            if (device.displayName != "Mouse" && device.displayName != "Keyboard")
-            {
-                inputDevices.Add(device);
-                Debug.Log(device.displayName);
-            }
-
-        }
-        if (inputDevices.Count > 1 && isLocalMultiplayer)
-        {
-            isSplitScreen = true;
-            playerInputManager.splitScreen = isSplitScreen;
-        }
-
-
-        for (int i = 0; i < inputDevices.Count; i++)
-        {
-            if (inputDevices[i].displayName == "Keyboard")
-            {
-                playerInputManager.JoinPlayer(i, -1, "Keyboard and mouse", inputDevices[i]);
-            }
-            else
-            {
-                playerInputManager.JoinPlayer(i, -1, "Gamepad", inputDevices[i]);
-            }
-
-        }
-
-        
-        
 
     }
 
@@ -107,4 +75,5 @@ public class InputManager : MonoBehaviour
     {
         
     }
+
 }

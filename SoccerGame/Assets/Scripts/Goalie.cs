@@ -10,11 +10,14 @@ public class Goalie : MonoBehaviour
     public float movementSpeed = .5f;
     public float movementRange = 4f;
     protected Ball ball;
+    private float timePassed = 0f;
+    private float xOrigin = 0f;
     // Start is called before the first frame update
     void Start()
     {
         rb = GetComponent<Rigidbody>();
         ball = FindObjectOfType<Ball>();
+        xOrigin = rb.position.x - movementRange;
     }
 
     // Update is called once per frame
@@ -23,15 +26,12 @@ public class Goalie : MonoBehaviour
         
     }
 
-    public void Move(float value)
-    {
-        desiredXOffset += (value * movementSpeed);
-        desiredXOffset = Mathf.Clamp(desiredXOffset, -movementRange, movementRange);   
-    }
-
     private void FixedUpdate()
     {
-        rb.MovePosition(new Vector3(desiredXOffset, rb.position.y, rb.position.z));
+        timePassed += Time.fixedDeltaTime * movementSpeed;
+        
+        rb.MovePosition(new Vector3(Mathf.Lerp(xOrigin, xOrigin + 2 * movementRange, Mathf.PingPong(timePassed, 1)), rb.position.y, rb.position.z));
+        
     }
 
     private void OnCollisionEnter(Collision collision)
