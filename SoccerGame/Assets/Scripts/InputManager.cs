@@ -47,8 +47,9 @@ public class InputManager : MonoBehaviour
         }
         else
         {
+            Debug.Log("No SelectSidesGui!");
             // we are not in the select sides scene so we use the GameplayManager 
-            GameplayManager.instance.PlayerJoined(playerInput);
+            //GameplayManager.instance.PlayerJoined(playerInput);
         }
     }
 

@@ -69,7 +69,7 @@ public class AiController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        _.Tick();
+
     }
 
     private void FixedUpdate()
@@ -77,7 +77,6 @@ public class AiController : MonoBehaviour
         _.horizontalInput = 0f;
         _.verticalInput = 0f;
         GetInput();
-        _.FixedTick();
     }
 
 
@@ -94,8 +93,7 @@ public class AiController : MonoBehaviour
 
         _.horizontalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.x) / 5f) * -Mathf.Sign(relativeDirection.x);
         _.verticalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.z) / 5f) * -Mathf.Sign(relativeDirection.z);
-        _.directionOfMovement = _.GetDirectionOfMovement(_.horizontalInput, _.verticalInput).normalized;
-        _.unitGoalVelocity = _.GetDirectionOfMovement(_.horizontalInput, _.verticalInput).normalized;
+
     }
 
 

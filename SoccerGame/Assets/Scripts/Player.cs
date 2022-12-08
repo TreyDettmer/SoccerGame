@@ -162,7 +162,7 @@ public class Player : MonoBehaviour
 
 
     #region GUI
-    private PlayerGui cameraPlayerGui;
+    protected PlayerGui cameraPlayerGui;
 
     
     #endregion
@@ -229,7 +229,7 @@ public class Player : MonoBehaviour
                     if (ball.owner == null)
                     {
                         // ensure that we are not sliding
-                        if (!isSliding)
+                        if (!IsSliding)
                         {
                             // ensure that we are not being penalized for fouling
                             if (playerState != PlayerState.Penalized)
@@ -287,7 +287,7 @@ public class Player : MonoBehaviour
     {
         if (playerState == PlayerState.Playing)
         {
-            if (isSliding)
+            if (IsSliding)
             {
                 if (Rb.velocity.sqrMagnitude < maxSlideSpeed * maxSlideSpeed)
                 {
@@ -296,9 +296,10 @@ public class Player : MonoBehaviour
                 }
                 return;
             }
+            unitGoalVelocity = GetDirectionOfMovement(horizontalInput, verticalInput).normalized;
             if ((horizontalInput != 0 || verticalInput != 0))
             {
-                unitGoalVelocity = GetDirectionOfMovement(horizontalInput, verticalInput).normalized;
+                
                 goalRotation = Quaternion.LookRotation(unitGoalVelocity, Vector3.up);
                 
                 Quaternion toRotation = Quaternion.LookRotation(unitGoalVelocity, Vector3.up);
@@ -361,21 +362,27 @@ public class Player : MonoBehaviour
 
     public Vector3 GetDirectionOfMovement(float _horizontalInput, float _verticalInput)
     {
-        Vector3 forward = cam.transform.forward;
-        Vector3 right = cam.transform.right;
-        forward.y = 0;
-        right.y = 0;
-        forward = forward.normalized;
-        right = right.normalized;
-        Vector3 forwardRelativeVerticalInput = _verticalInput * forward;
-        Vector3 rightRelativeHorizontalInput = _horizontalInput * right;
+ 
+        Vector3 forwardRelativeVerticalInput;
+        Vector3 rightRelativeHorizontalInput;
+        if (teamIndex == 1)
+        {
+            forwardRelativeVerticalInput = _verticalInput * -Vector3.forward;
+            rightRelativeHorizontalInput = _horizontalInput * -Vector3.right;
+        }
+        else
+        {
+            forwardRelativeVerticalInput = _verticalInput * Vector3.forward;
+            rightRelativeHorizontalInput = _horizontalInput * Vector3.right;
+        }
+
 
         return forwardRelativeVerticalInput + rightRelativeHorizontalInput;
     }
 
     public virtual void StartKick()
     {
-        if (!isKicking && !isSliding)
+        if (!isKicking && !IsSliding)
         {
             Debug.Log("Starting kick");
             isKicking = true;
@@ -442,7 +449,6 @@ public class Player : MonoBehaviour
     {
         HasBall = false;
         CanDribble = true;
-        cam.transform.position = transform.position + -transform.forward * 3f + Vector3.up * 2f;
     }
 
     public virtual void UpdatePlayerState(PlayerState newState)
@@ -451,7 +457,7 @@ public class Player : MonoBehaviour
         {
             if (playerState != PlayerState.Penalized)
             {
-                if (isSliding)
+                if (IsSliding)
                 {
                     shouldBePenalized = true;
                     return;
@@ -530,7 +536,7 @@ public class Player : MonoBehaviour
     {
         if (collision.collider.gameObject.layer == LayerMask.NameToLayer("Ball"))
         {
-            if (isSliding)
+            if (IsSliding)
             {
                 slidIntoBall = true;
             }
@@ -556,7 +562,7 @@ public class Player : MonoBehaviour
             {
                 if (collision.collider.GetComponent<Player>().teamIndex != teamIndex)
                 {
-                    if (isSliding && slidIntoBall == false)
+                    if (IsSliding && slidIntoBall == false)
                     {
                         GameplayManager.instance.PlayerFoul(this, collision.collider.GetComponent<Player>());
                         Debug.Log("Foul on team " + teamIndex);
@@ -586,20 +592,20 @@ public class Player : MonoBehaviour
         //animator.SetBool("isSliding", false);
 
         slidIntoBall = false;
-        isSliding = false;
+        IsSliding = false;
         if (shouldBePenalized)
         {
             shouldBePenalized = false;
             UpdatePlayerState(PlayerState.Penalized);
         }
-        canSlide = false;
+        CanSlide = false;
         StartCoroutine(SlideCooldownRoutine());
     }
 
     protected IEnumerator SlideCooldownRoutine()
     {
         yield return new WaitForSeconds(slideCooldownTime);
-        canSlide = true;
+        CanSlide = true;
     }
 
     public IEnumerator SlideRoutine()

@@ -221,7 +221,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a38264a31501e243b5effe19bad1390, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  aiPlayerObjectPrefab: {fileID: 4334542166288759120, guid: db6eec9b6f52c0744a7365f155a6a3e4, type: 3}
+  aiPlayerObjectPrefab: {fileID: 4334542166288759120, guid: 467b83d102141fe4f8e24b9604b00536, type: 3}
   numberOfAi: 9
   team0SpawnPointParent: {fileID: 1624036713}
   team1SpawnPointParent: {fileID: 37348728}
@@ -239,6 +239,7 @@ MonoBehaviour:
   team1CullingMask:
     serializedVersion: 2
     m_Bits: 7159
+  playerPrefab: {fileID: 6536282493736045028, guid: 94078663df8f99044bfe8c0554ad3e68, type: 3}
 --- !u!4 &62990041
 Transform:
   m_ObjectHideFlags: 0
@@ -3725,7 +3726,7 @@ MonoBehaviour:
       m_SingletonActionBindings: []
       m_Flags: 0
     m_Reference: {fileID: 0}
-  m_PlayerPrefab: {fileID: 4334542166288759120, guid: 563d0b431bc502d4da81178bf1d93e1d, type: 3}
+  m_PlayerPrefab: {fileID: 8395130643309218856, guid: bd065ec52d16c3c458cad37a588b27c5, type: 3}
   m_SplitScreen: 0
   m_MaintainAspectRatioInSplitScreen: 0
   m_FixedNumberOfSplitScreens: -1

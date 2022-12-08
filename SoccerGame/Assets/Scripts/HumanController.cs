@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 public class HumanController : MonoBehaviour
 {
 
-    Player myPlayer;
+    public Player myPlayer { get; set; }
 
     #region Input
     private InputActionAsset playerInputAsset;
@@ -23,13 +23,14 @@ public class HumanController : MonoBehaviour
     #region GUI
     private float previousMovementTime = 0f;
     // guiSection 1 means selecting sides, guiSection 2 means selecting AI count
-    private int guiSection = 1;
-    private Color color;
+    [HideInInspector] public int guiSection = 1;
+    [HideInInspector] public Color color;
     public PlayerGui cameraPlayerGui;
     #endregion
 
     #region Info
     Player.GameState gameState;
+    public int teamIndex = -1;
     #endregion
 
 
@@ -41,14 +42,22 @@ public class HumanController : MonoBehaviour
         playerInputAsset = playerInput.actions;
         gameplayActionMap = playerInputAsset.FindActionMap("Player");
         selectSidesActionMap = playerInputAsset.FindActionMap("SelectSides");
-        cameraPlayerGui = cam.GetComponent<PlayerGui>();
-        gameState = Player.GameState.Gameplay;
+        cameraPlayerGui = GetComponent<PlayerGui>();
+        cameraFollowPlayer = GetComponent<FollowPlayer>();
+        gameState = Player.GameState.SelectSides;
         gameplayActionMap.Disable();
+        DontDestroyOnLoad(gameObject);
     }
 
     public void OnGameplayStart()
     {
 
+    }
+
+    public void SetNewPlayer(Player player)
+    {
+        myPlayer = player;
+        cameraFollowPlayer.SetPlayer(player);
     }
 
     protected void GetInput()
@@ -181,7 +190,6 @@ public class HumanController : MonoBehaviour
 
     public void MoveLeft(InputAction.CallbackContext context)
     {
-        if (!myPlayer) return;
         if (SelectSidesGui.instance == null)
         {
             return;
@@ -189,13 +197,12 @@ public class HumanController : MonoBehaviour
         if (Time.time - previousMovementTime > .25f)
         {
            previousMovementTime = Time.time;
-            SelectSidesGui.instance.PlayerMovedLeftOrRight(this, true, guiSection);
+           SelectSidesGui.instance.PlayerMovedLeftOrRight(playerInput, true, guiSection);
         }
 
     }
     public void MoveRight(InputAction.CallbackContext context)
     {
-        if (!myPlayer) return;
         if (SelectSidesGui.instance == null)
         {
             return;
@@ -203,13 +210,12 @@ public class HumanController : MonoBehaviour
         if (Time.time - previousMovementTime > .25f)
         {
             previousMovementTime = Time.time;
-            SelectSidesGui.instance.PlayerMovedLeftOrRight(this, false, guiSection);
+            SelectSidesGui.instance.PlayerMovedLeftOrRight(playerInput, false, guiSection);
         }
     }
 
     public void MoveUp(InputAction.CallbackContext context)
     {
-        if (!myPlayer) return;
         if (SelectSidesGui.instance == null)
         {
             return;
@@ -217,13 +223,12 @@ public class HumanController : MonoBehaviour
         if (Time.time - previousMovementTime > .25f)
         {
             previousMovementTime = Time.time;
-            SelectSidesGui.instance.PlayerMovedUpOrDown(this, true, guiSection);
+            SelectSidesGui.instance.PlayerMovedUpOrDown(playerInput, true, guiSection);
         }
     }
 
     public void MoveDown(InputAction.CallbackContext context)
     {
-        if (!myPlayer) return;
         if (SelectSidesGui.instance == null)
         {
             return;
@@ -231,20 +236,19 @@ public class HumanController : MonoBehaviour
         if (Time.time - previousMovementTime > .25f)
         {
             previousMovementTime = Time.time;
-            SelectSidesGui.instance.PlayerMovedUpOrDown(this, false, guiSection);
+            SelectSidesGui.instance.PlayerMovedUpOrDown(playerInput, false, guiSection);
         }
     }
 
     public void ReadyUp(InputAction.CallbackContext context)
     {
-        if (!myPlayer) return;
         if (!context.canceled)
         {
             if (SelectSidesGui.instance == null)
             {
                 return;
             }
-            SelectSidesGui.instance.PlayerReadiedUp(this, true);
+            SelectSidesGui.instance.ReadiedUp(playerInput, true);
         }
     }
     #endregion

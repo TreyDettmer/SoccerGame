@@ -18,11 +18,8 @@ public class AiPlayerController : Player
     private bool isLiningUpShot = false;
 
     private Vector3 desiredPosition = Vector3.zero;
-    private Vector3 myGoalsPosition = Vector3.zero;
-    private Vector3 opponentsGoalsPosition = Vector3.zero;
     private Player opponentImDefending = null;
     private List<Vector3> shotPlacements = new List<Vector3>();
-    private LayerMask playerLayerMask;
 
     public enum AIState
     {
@@ -56,12 +53,12 @@ public class AiPlayerController : Player
         
 
     }
-    protected override void FixedUpdate()
+    private void FixedUpdate()
     {
         horizontalInput = 0f;
         verticalInput = 0f;
 
-        
+
 
         CalculateMovementInput();
 
@@ -100,11 +97,11 @@ public class AiPlayerController : Player
 
         if (isKicking)
         {
-            unitGoalVelocity = GetDirectionOfMovement(0f, verticalInput).normalized;
+            //unitGoalVelocity = GetDirectionOfMovement(0f, verticalInput).normalized;
         }
         else
         {
-            unitGoalVelocity = GetDirectionOfMovement(horizontalInput, verticalInput).normalized;
+            //unitGoalVelocity = GetDirectionOfMovement(horizontalInput, verticalInput).normalized;
         }
 
 
@@ -112,11 +109,11 @@ public class AiPlayerController : Player
     }
 
     // Update is called once per frame
-    protected override void Update()
+    private void Update()
     {
         base.Update();
         // if we do not have the ball
-        if (!hasBall)
+        if (!HasBall)
         {
             // check if the ball is in a dribblable position
             if (CheckIfCanDribble())
@@ -125,7 +122,7 @@ public class AiPlayerController : Player
                 if (ball.owner == null)
                 {
                     // ensure that we are not sliding
-                    if (!isSliding)
+                    if (!IsSliding)
                     {
                         // ensure that we are not being penalized for fouling
                         if (playerState != PlayerState.Penalized)
@@ -133,7 +130,7 @@ public class AiPlayerController : Player
                             // check if it's been long enough since we last had the ball
                             if (CanDribble)
                             {
-                                hasBall = true;
+                                HasBall = true;
                                 ball.SetOwner(this);
                                 Debug.Log("New owner");
                                 ball.transform.position = transform.position + transform.forward * 1.5f;

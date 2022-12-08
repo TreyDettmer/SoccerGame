@@ -11,9 +11,9 @@ public class GameplayManager : MonoBehaviour
     private int team0Score = 0;
     private int team1Score = 0;
     private List<PlayerInput> playerInputs = new List<PlayerInput>();
-    private List<Player[]> players = new List<Player[]>();
-    private List<Player[]>[] teams = { new List<Player[]>(), new List<Player[]>() };
-    private List<Player[]> restartRequesters = new List<Player[]>();
+    private List<Player> players = new List<Player>();
+    private List<Player>[] teams = { new List<Player>(), new List<Player>() };
+    private List<HumanController> restartRequesters = new List<HumanController>();
     [SerializeField]
     private GameObject aiPlayerObjectPrefab;
     public int numberOfAi = 1;
@@ -49,6 +49,8 @@ public class GameplayManager : MonoBehaviour
     int numberOfAiOnTeam0 = 1;
     int numberOfAiOnTeam1 = 1;
 
+    public GameObject playerPrefab;
+
 
 
     private void Awake()
@@ -74,32 +76,35 @@ public class GameplayManager : MonoBehaviour
         else
         {
 
-            numberOfAiOnTeam0 = MatchSettings.instance.numberOfAiOnTeam0;
-            numberOfAiOnTeam1 = MatchSettings.instance.numberOfAiOnTeam1;
+            numberOfAiOnTeam0 = 0;// MatchSettings.instance.numberOfAiOnTeam0;
+            numberOfAiOnTeam1 = 0;// MatchSettings.instance.numberOfAiOnTeam1;
             List<PlayerInput> team0PlayerInputs = MatchSettings.instance.team0PlayerInputs;
             List<PlayerInput> team1PlayerInputs = MatchSettings.instance.team1PlayerInputs;
             for (int i = 0; i < team0PlayerInputs.Count; i++)
             {
-                Player[] playerComponents = team0PlayerInputs[i].GetComponents<Player>();
-                teams[0].Add(playerComponents);
+                Player player = Instantiate(playerPrefab).GetComponent<Player>();
+                HumanController humanController = team0PlayerInputs[i].GetComponent<HumanController>();
+                player.SetNewController(humanController);
+                humanController.SetNewPlayer(player);
+                player.teamIndex = humanController.teamIndex;
+                teams[0].Add(player);
+                players.Add(player);
                 playerInputs.Add(team0PlayerInputs[i]);
-                players.Add(playerComponents);
-                team0PlayerInputs[i].GetComponent<PlayerController>().UpdateGameState(PlayerController.GameState.Gameplay);
+                player.UpdateGameState(Player.GameState.Gameplay);
             }
             for (int i = 0; i < team1PlayerInputs.Count; i++)
             {
-                Player[] playerComponents = team1PlayerInputs[i].GetComponents<Player>();
-                teams[1].Add(playerComponents);
+                Player player = Instantiate(playerPrefab).GetComponent<Player>();
+                HumanController humanController = team1PlayerInputs[i].GetComponent<HumanController>();
+                player.SetNewController(humanController);
+                humanController.SetNewPlayer(player);
+                player.teamIndex = humanController.teamIndex;
+                teams[1].Add(player);
+                players.Add(player);
                 playerInputs.Add(team1PlayerInputs[i]);
-                players.Add(playerComponents);
-                team1PlayerInputs[i].GetComponent<PlayerController>().UpdateGameState(PlayerController.GameState.Gameplay);
+                player.UpdateGameState(Player.GameState.Gameplay);
             }
-
-
         }
-
-
-        
     }
 
     // Start is called before the first frame update
@@ -163,47 +168,27 @@ public class GameplayManager : MonoBehaviour
         
     }
 
-    public void SpawnPlayer(Player[] playerComponents, Transform spawnPoint)
+    public void SpawnPlayer(Player player, Transform spawnPoint)
     {
-        Transform playerParent = playerComponents[0].transform.parent;
-        playerParent.transform.rotation = spawnPoint.rotation;
-        playerParent.transform.position = spawnPoint.position;
-        playerComponents[0].transform.rotation = spawnPoint.rotation;
-        playerComponents[0].transform.position = spawnPoint.position;
 
-        playerComponents[0].GetComponent<Rigidbody>().velocity = Vector3.zero;
-        playerComponents[0].ResetValues();
-        playerComponents[1].ResetValues();
-        if (playerComponents[0].teamIndex == 0)
+        player.transform.rotation = spawnPoint.rotation;
+        player.transform.position = spawnPoint.position;
+
+        player.GetComponent<Rigidbody>().velocity = Vector3.zero;
+        player.ResetValues();
+        if (player.teamIndex == 0)
         {
-            playerComponents[0].playingMaterial = team0PlayingMaterial;
-            playerComponents[0].penalizedMaterial = team0PenalizedMaterial;
-            playerComponents[1].playingMaterial = team0PlayingMaterial;
-            playerComponents[1].penalizedMaterial = team0PenalizedMaterial;
-            playerComponents[0].UpdateMaterial();
-            MinimapController.instance.CreatePlayerCanvasPrefab(playerComponents[0], new Color(0f, 0f, 1f));
+            player.playingMaterial = team0PlayingMaterial;
+            player.penalizedMaterial = team0PenalizedMaterial;
+            player.UpdateMaterial();
+            MinimapController.instance.CreatePlayerCanvasPrefab(player, new Color(0f, 0f, 1f));
         }
         else
         {
-            playerComponents[0].playingMaterial = team1PlayingMaterial;
-            playerComponents[0].penalizedMaterial = team1PenalizedMaterial;
-            playerComponents[1].playingMaterial = team1PlayingMaterial;
-            playerComponents[1].penalizedMaterial = team1PenalizedMaterial;
-            playerComponents[0].UpdateMaterial();
-            MinimapController.instance.CreatePlayerCanvasPrefab(playerComponents[0], new Color(1f, 0f, 0f));
-        }
-
-        if (playerParent.GetComponentInChildren<Camera>())
-        {
-            if (players.Count - 1 == 0)
-            {
-
-                playerParent.GetComponentInChildren<Camera>().cullingMask = team0CullingMask;
-            }
-            else
-            {
-                playerParent.GetComponentInChildren<Camera>().cullingMask = team1CullingMask;
-            }
+            player.playingMaterial = team1PlayingMaterial;
+            player.penalizedMaterial = team1PenalizedMaterial;
+            player.UpdateMaterial();
+            MinimapController.instance.CreatePlayerCanvasPrefab(player, new Color(1f, 0f, 0f));
         }
     }
 
@@ -211,41 +196,30 @@ public class GameplayManager : MonoBehaviour
     {
         for (int i = 0; i < numberOfAiOnTeam0; i++)
         {
-            GameObject aiPlayer = Instantiate(aiPlayerObjectPrefab);
-            Player[] playerComponents = aiPlayer.GetComponentsInChildren<Player>();
-            for (int index = 0; index < playerComponents.Length; index++)
-            {
-                playerComponents[index].teamIndex = 0;
-            }
-            teams[0].Add(playerComponents);
-            players.Add(playerComponents);
+            Player player = Instantiate(aiPlayerObjectPrefab).GetComponent<Player>();
+            player.teamIndex = 0;
+            teams[0].Add(player);
+            players.Add(player);
 
         }
         for (int i = 0; i < numberOfAiOnTeam1; i++)
         {
-            GameObject aiPlayer = Instantiate(aiPlayerObjectPrefab);
-            Player[] playerComponents = aiPlayer.GetComponentsInChildren<Player>();
-            for (int index = 0; index < playerComponents.Length; index++)
-            {
-                playerComponents[index].teamIndex = 1;
-            }
-            teams[1].Add(playerComponents);
-            players.Add(playerComponents);
+            Player player = Instantiate(aiPlayerObjectPrefab).GetComponent<Player>();
+            player.teamIndex = 1;
+            teams[1].Add(player);
+            players.Add(player);
         }
     }
 
     public void PlayerJoined(PlayerInput playerInput)
     {
 
-        Player[] playerComponents = playerInput.GetComponents<Player>();
-        for (int i = 0; i < playerComponents.Length; i++)
-        {
-            playerComponents[i].teamIndex = 0;
-        }
-        teams[0].Add(playerComponents);
+        Player player = playerInput.GetComponent<Player>();
+        player.teamIndex = 0;
+        teams[0].Add(player);
         playerInputs.Add(playerInput);
-        players.Add(playerComponents);
-        playerInput.GetComponent<PlayerController>().UpdateGameState(PlayerController.GameState.Gameplay);
+        players.Add(player);
+        player.UpdateGameState(Player.GameState.Gameplay);
         if (playerInputs.Count > 0)
         {
             // Start Game since we actually have players
@@ -253,104 +227,21 @@ public class GameplayManager : MonoBehaviour
         }
     }
 
-    public void SpawnPlayer(PlayerInput playerInput, Player.ControllerType controllerType)
-    {
-        //playerInputs.Add(playerInput);
-        //Player player = playerInput.GetComponent<Player>();
-        //players.Add(player);
-        
-        //Transform playerParent = playerInput.transform.parent;
-        //playerParent.position = spawnPoints[players.Count - 1].position;
-        //playerParent.rotation = spawnPoints[players.Count - 1].rotation;
-        //player.teamIndex = (players.Count - 1) % 2;
-        //teams[player.teamIndex].Add(player);
-        //player.controllerType = controllerType;
-        //if ((players.Count - 1) % 2 == 0)
-        //{
-        //    player.playingMaterial = team0PlayingMaterial;
-        //    player.penalizedMaterial = team0PenalizedMaterial;
-        //    player.UpdateMaterial();
-        //    MinimapController.instance.CreatePlayerCanvasPrefab(player, new Color(0f, 0f, 1f));
-        //}
-        //else
-        //{
-        //    player.playingMaterial = team1PlayingMaterial;
-        //    player.penalizedMaterial = team1PenalizedMaterial;
-        //    player.UpdateMaterial();
-        //    MinimapController.instance.CreatePlayerCanvasPrefab(player, new Color(1f, 0f, 0f));
-        //}
-        //if (playerParent.forward.z < 0)
-        //{
-        //    if (playerInput.GetComponentInChildren<FollowPlayer>())
-        //    {
-        //        playerParent.GetComponentInChildren<FollowPlayer>().lookInOppositeDirection = true;
-        //    }
-        //}
-        //if (playerParent.GetComponentInChildren<Camera>())
-        //{
-        //    if (players.Count - 1 == 0)
-        //    {
-
-        //        playerParent.GetComponentInChildren<Camera>().cullingMask = team0CullingMask;
-        //    }
-        //    else
-        //    {
-        //        playerParent.GetComponentInChildren<Camera>().cullingMask = team1CullingMask;
-        //    }
-        //}
-        //AssignTeammatesAndOpponents();
-
-    }
-
     // Sets the teammates and opponents for each player
     private void AssignTeammatesAndOpponents()
-    {
-        
+    {    
         for (int teamIndex = 0; teamIndex < teams.Length; teamIndex++)
         {
             int opposingTeamIndex = teamIndex == 1 ? 0 : 1;
             for (int playerIndex = 0; playerIndex < teams[teamIndex].Count; playerIndex++)
             {
                 Debug.Log("Setting teammates for player " + playerIndex + " on team: " + teamIndex);
-                List<Player[]> teamWithoutPlayer = new List<Player[]>(teams[teamIndex]);
+                List<Player> teamWithoutPlayer = new List<Player>(teams[teamIndex]);
                 teamWithoutPlayer.RemoveAt(playerIndex);
-                for (int i = 0; i < 2; i++)
-                {
-                    teams[teamIndex][playerIndex][i].teammates = teamWithoutPlayer;
-                    teams[teamIndex][playerIndex][i].opponents = teams[opposingTeamIndex];
-                }
-
+                teams[teamIndex][playerIndex].teammates = teamWithoutPlayer;
+                teams[teamIndex][playerIndex].opponents = teams[opposingTeamIndex];
             }
-
-
         }
-    }
-
-    public void SpawnPlayer(Player player, Player.ControllerType controllerType)
-    {
-
-        //players.Add(player);
-        //Transform playerParent = player.transform.parent;
-        //playerParent.position = spawnPoints[players.Count - 1].position;
-        //playerParent.rotation = spawnPoints[players.Count - 1].rotation;
-        //player.teamIndex = (players.Count - 1) % 2;
-        //teams[player.teamIndex].Add(player);
-        //player.controllerType = controllerType;
-        //if ((players.Count - 1) % 2 == 0)
-        //{
-        //    player.playingMaterial = team0PlayingMaterial;
-        //    player.penalizedMaterial = team0PenalizedMaterial;
-        //    player.UpdateMaterial();
-        //    MinimapController.instance.CreatePlayerCanvasPrefab(player, new Color(0f, 0f, 1f));
-        //}
-        //else
-        //{
-        //    player.playingMaterial = team1PlayingMaterial;
-        //    player.penalizedMaterial = team1PenalizedMaterial;
-        //    player.UpdateMaterial();
-        //    MinimapController.instance.CreatePlayerCanvasPrefab(player, new Color(1f, 0f, 0f));
-        //}
-        //AssignTeammatesAndOpponents();
     }
 
     public void GoalScored(int teamGoalScoredOn)
@@ -396,19 +287,17 @@ public class GameplayManager : MonoBehaviour
     {
         for (int i = 0; i < teams[0].Count; i++)
         {
-            teams[0][i][0].transform.position = team0SpawnPoints[i].position;
-            teams[0][i][0].transform.rotation = team0SpawnPoints[i].rotation;
-            teams[0][i][0].GetComponent<Rigidbody>().velocity = Vector3.zero;
-            teams[0][i][0].ResetValues();
-            teams[0][i][1].ResetValues();
+            teams[0][i].transform.position = team0SpawnPoints[i].position;
+            teams[0][i].transform.rotation = team0SpawnPoints[i].rotation;
+            teams[0][i].GetComponent<Rigidbody>().velocity = Vector3.zero;
+            teams[0][i].ResetValues();
         }
         for (int i = 0; i < teams[1].Count; i++)
         {
-            teams[1][i][0].transform.position = team1SpawnPoints[i].position;
-            teams[1][i][0].transform.rotation = team1SpawnPoints[i].rotation;
-            teams[1][i][0].GetComponent<Rigidbody>().velocity = Vector3.zero;
-            teams[1][i][0].ResetValues();
-            teams[1][i][1].ResetValues();
+            teams[1][i].transform.position = team1SpawnPoints[i].position;
+            teams[1][i].transform.rotation = team1SpawnPoints[i].rotation;
+            teams[1][i].GetComponent<Rigidbody>().velocity = Vector3.zero;
+            teams[1][i].ResetValues();
         }
     }
 
@@ -445,25 +334,25 @@ public class GameplayManager : MonoBehaviour
         fouler.UpdatePlayerState(Player.PlayerState.Penalized);
     }
 
-    public void PlayerRequestedRestart(Player player, bool canceledRequest = false)
+    public void RequestedRestart(HumanController humanController, bool canceledRequest = false)
     {
         if (canceledRequest)
         {
-            if (restartRequesters.Contains(player))
+            if (restartRequesters.Contains(humanController))
             {
-                restartRequesters.Remove(player);
+                restartRequesters.Remove(humanController);
             }
             
         }
         else
         {
-            if (!restartRequesters.Contains(player))
+            if (!restartRequesters.Contains(humanController))
             {
-                restartRequesters.Add(player);
+                restartRequesters.Add(humanController);
             }
             
         }
-        if (restartRequesters.Count >= players.Count)
+        if (restartRequesters.Count >= playerInputs.Count)
         {
             restartRequesters.Clear();
             RestartGame();
@@ -484,8 +373,7 @@ public class GameplayManager : MonoBehaviour
     {
         for (int i = 0; i < players.Count; i++)
         {
-            players[i][0].UpdatePlayerState(Player.PlayerState.Waiting);
-            players[i][1].UpdatePlayerState(Player.PlayerState.Waiting);
+            players[i].UpdatePlayerState(Player.PlayerState.Waiting);
         }
         if (_countdownTime == -1f)
         {
@@ -502,8 +390,7 @@ public class GameplayManager : MonoBehaviour
         GameplayGui.instance.UpdateCountdown("Go");
         for (int i = 0; i < players.Count; i++)
         {
-            players[i][0].UpdatePlayerState(PlayerController.PlayerState.Playing);
-            players[i][1].UpdatePlayerState(PlayerController.PlayerState.Playing);
+            players[i].UpdatePlayerState(Player.PlayerState.Playing);
         }
         yield return new WaitForSeconds(1f);
         GameplayGui.instance.UpdateCountdown("");
@@ -515,11 +402,10 @@ public class GameplayManager : MonoBehaviour
     public void UpdateTeamWithBall(int teamIndex)
     {
         Player.teamWithBall = teamIndex;
-        Player[] playerWithBall = ball.owner;
+        Player playerWithBall = ball.owner;
         for (int i = 0; i < players.Count; i++)
         {
-            players[i][0].BallEvent(playerWithBall);
-            players[i][1].BallEvent(playerWithBall);
+            players[i].BallEvent(playerWithBall);
         }
     }
 

@@ -60,7 +60,7 @@ public class SelectSidesGui : MonoBehaviour
     {
         playerInputs.Add(playerInput);
         playerReadys.Add(false);
-        playerInput.GetComponent<PlayerController>().color = playerColors[playerInputs.Count - 1];
+        playerInput.GetComponent<HumanController>().color = playerColors[playerInputs.Count - 1];
         if (playerInputs.Count <= controllerIcons.Length)
         {
             Debug.Log("Changing color!");
@@ -75,7 +75,7 @@ public class SelectSidesGui : MonoBehaviour
         playerInputs.RemoveAt(index);
     }
 
-    public void PlayerMovedLeftOrRight(Player player, PlayerInput playerInput, bool movedLeft, int guiSection)
+    public void PlayerMovedLeftOrRight(PlayerInput playerInput, bool movedLeft, int guiSection)
     {
         int index = playerInputs.IndexOf(playerInput);
         if (guiSection == 1)
@@ -85,7 +85,7 @@ public class SelectSidesGui : MonoBehaviour
                 if (controllerIcons[index].rectTransform.anchoredPosition.x == 0f)
                 {
                     controllerIcons[index].rectTransform.anchoredPosition = new Vector2(-60f, controllerIcons[index].rectTransform.anchoredPosition.y);
-                    player.teamIndex = 0;
+                    playerInput.GetComponent<HumanController>().teamIndex = 0;
                     team0Players += 1;
                     if (team0Players + team0AiCount > maxPlayersOnTeam)
                     {
@@ -104,7 +104,7 @@ public class SelectSidesGui : MonoBehaviour
                         team1AiCount = 1; ;
                         UpdateAiCountLabels();
                     }
-                    player.teamIndex = -1;
+                    playerInput.GetComponent<HumanController>().teamIndex = -1;
                     audioSource.PlayOneShot(clickSound);
                 }
             }
@@ -114,7 +114,7 @@ public class SelectSidesGui : MonoBehaviour
                 {
                     controllerIcons[index].rectTransform.anchoredPosition = new Vector2(60f, controllerIcons[index].rectTransform.anchoredPosition.y);
                     team1Players += 1;
-                    player.teamIndex = 1;
+                    playerInput.GetComponent<HumanController>().teamIndex = 1;
                     if (team1Players + team1AiCount > maxPlayersOnTeam)
                     {
                         team1AiCount = maxPlayersOnTeam - team1Players;
@@ -131,14 +131,14 @@ public class SelectSidesGui : MonoBehaviour
                         team0AiCount = 1; ;
                         UpdateAiCountLabels();
                     }
-                    player.teamIndex = -1;
+                    playerInput.GetComponent<HumanController>().teamIndex = -1;
                     audioSource.PlayOneShot(clickSound);
                 }
             }
         }
         else if (guiSection == 2)
         {
-            if (player.teamIndex == 1)
+            if (playerInput.GetComponent<HumanController>().teamIndex == 1)
             {
                 if (movedLeft)
                 {
@@ -154,7 +154,7 @@ public class SelectSidesGui : MonoBehaviour
                 audioSource.PlayOneShot(aiCountChangedSound);
                 UpdateAiCountLabels();
             }
-            else if (player.teamIndex == 0)
+            else if (playerInput.GetComponent<HumanController>().teamIndex == 0)
             {
                 if (movedLeft)
                 {
@@ -175,21 +175,21 @@ public class SelectSidesGui : MonoBehaviour
     }
 
 
-    public void PlayerMovedUpOrDown(Player player, PlayerInput playerInput, bool movedUp, int guiSection)
+    public void PlayerMovedUpOrDown(PlayerInput playerInput, bool movedUp, int guiSection)
     {
         int index = playerInputs.IndexOf(playerInput);
         if (guiSection == 1)
         {
-            if (!movedUp && player.teamIndex != -1)
+            if (!movedUp && playerInput.GetComponent<HumanController>().teamIndex != -1)
             {
-                player.guiSection = 2;
-                if (player.teamIndex == 1)
+                playerInput.GetComponent<HumanController>().guiSection = 2;
+                if (playerInput.GetComponent<HumanController>().teamIndex == 1)
                 {
-                    team1Border.color = player.color;
+                    team1Border.color = playerInput.GetComponent<HumanController>().color;
                 }
                 else
                 {
-                    team0Border.color = player.color;
+                    team0Border.color = playerInput.GetComponent<HumanController>().color;
                 }
                 audioSource.PlayOneShot(clickSound);
             }
@@ -198,8 +198,8 @@ public class SelectSidesGui : MonoBehaviour
         {
             if (movedUp)
             {
-                player.guiSection = 1;
-                if (player.teamIndex == 1)
+                playerInput.GetComponent<HumanController>().guiSection = 1;
+                if (playerInput.GetComponent<HumanController>().teamIndex == 1)
                 {
                     team1Border.color = Color.white;
                 }
@@ -212,12 +212,13 @@ public class SelectSidesGui : MonoBehaviour
         }
     }
 
-    public void PlayerReadiedUp(Player player, PlayerInput playerInput,bool readiedUp)
+    public void ReadiedUp(PlayerInput playerInput,bool readiedUp)
     {
-        if (player.teamIndex == -1)
+        if (playerInput.GetComponent<HumanController>().teamIndex == -1)
         {
             return;
         }
+
         int index = playerInputs.IndexOf(playerInput);
         if (playerReadys[index] == readiedUp)
         {
@@ -226,7 +227,6 @@ public class SelectSidesGui : MonoBehaviour
         controllerIcons[index].transform.GetChild(0).GetChild(0).gameObject.SetActive(readiedUp);
         playerReadys[index] = readiedUp;
         audioSource.PlayOneShot(readyUpSound);
-
         // return if not every player has readied up
         for (int i = 0; i < playerReadys.Count; i++)
         {
@@ -245,11 +245,11 @@ public class SelectSidesGui : MonoBehaviour
             List<PlayerInput> team1PlayerInputs = new List<PlayerInput>();
             for (int i = 0; i < playerInputs.Count; i++)
             {
-                if (playerInputs[i].GetComponent<PlayerController>().teamIndex == 0)
+                if (playerInputs[i].GetComponent<HumanController>().teamIndex == 0)
                 {
                     team0PlayerInputs.Add(playerInputs[i]);
                 }
-                else if (playerInputs[i].GetComponent<PlayerController>().teamIndex == 1)
+                else if (playerInputs[i].GetComponent<HumanController>().teamIndex == 1)
                 {
                     team1PlayerInputs.Add(playerInputs[i]);
                 }
@@ -276,7 +276,7 @@ public class SelectSidesGui : MonoBehaviour
         bool playerIsOnTeam1 = false;
         for (int i = 0; i < playerInputs.Count; i++)
         {
-            PlayerController player = playerInputs[i].GetComponent<PlayerController>();
+            HumanController player = playerInputs[i].GetComponent<HumanController>();
             if (player.teamIndex == 1)
             {
                 playerIsOnTeam1 = true;

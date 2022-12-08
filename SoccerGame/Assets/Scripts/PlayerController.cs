@@ -7,13 +7,7 @@ using DG.Tweening;
 
 public class PlayerController : Player
 {
-    public enum GameState
-    {
-        SelectSides,
-        Gameplay
-    }
 
-    public GameState gameState = GameState.SelectSides;
 
 
     [SerializeField]
@@ -21,7 +15,6 @@ public class PlayerController : Player
 
     protected Camera cam;
     protected FollowPlayer cameraFollowPlayer;
-    protected PlayerGui cameraPlayerGui;
 
     protected InputActionAsset playerInputAsset;
     protected InputActionMap gameplayActionMap;
@@ -53,39 +46,12 @@ public class PlayerController : Player
         DontDestroyOnLoad(transform.parent.gameObject);
     }
 
-
-    public void UpdateGameState(GameState _gameState)
-    {
-        if (gameState == _gameState)
-        {
-            return;
-        }
-        if (_gameState == GameState.Gameplay)
-        {
-            cam = transform.parent.GetComponentInChildren<Camera>();
-            cameraFollowPlayer = cam.GetComponent<FollowPlayer>();
-            cameraFollowPlayer.OnGameplayStart();
-            
-            base.Start();
-            playerInput = GetComponent<PlayerInput>();
-            playerInputAsset = playerInput.actions;
-            gameplayActionMap = playerInputAsset.FindActionMap("Player");
-            selectSidesActionMap = playerInputAsset.FindActionMap("SelectSides");
-            selectSidesActionMap.Disable();
-            cameraPlayerGui = cam.GetComponent<PlayerGui>();
-            animator = GetComponent<Animator>();
-            gameState = GameState.Gameplay;
-            gameplayActionMap.Enable();
-        }
-    }
-
-
     protected override void Start()
     {
         
     }
 
-    protected override void FixedUpdate()
+    private void FixedUpdate()
     {
         if (gameState == GameState.Gameplay)
         {
@@ -105,7 +71,7 @@ public class PlayerController : Player
         }
         else
         {
-            unitGoalVelocity = GetDirectionOfMovement(horizontalInput, verticalInput).normalized;
+            //unitGoalVelocity = GetDirectionOfMovement(horizontalInput, verticalInput).normalized;
         }
     }
 
@@ -129,23 +95,23 @@ public class PlayerController : Player
     }
 
 
-    protected override Vector3 GetDirectionOfMovement(float _horizontalInput, float _verticalInput)
-    {
-        Vector3 forward = cam.transform.forward;
-        Vector3 right = cam.transform.right;
-        forward.y = 0;
-        right.y = 0;
-        forward = forward.normalized;
-        right = right.normalized;
-        Vector3 forwardRelativeVerticalInput = _verticalInput * forward;
-        Vector3 rightRelativeHorizontalInput = _horizontalInput * right;
+    //protected override Vector3 GetDirectionOfMovement(float _horizontalInput, float _verticalInput)
+    //{
+    //    Vector3 forward = cam.transform.forward;
+    //    Vector3 right = cam.transform.right;
+    //    forward.y = 0;
+    //    right.y = 0;
+    //    forward = forward.normalized;
+    //    right = right.normalized;
+    //    Vector3 forwardRelativeVerticalInput = _verticalInput * forward;
+    //    Vector3 rightRelativeHorizontalInput = _horizontalInput * right;
      
-        return forwardRelativeVerticalInput + rightRelativeHorizontalInput;
-    }
+    //    return forwardRelativeVerticalInput + rightRelativeHorizontalInput;
+    //}
 
 
     // Update is called once per frame
-    protected override void Update()
+    private void Update()
     {
         if (gameState == GameState.Gameplay)
         {
@@ -153,7 +119,7 @@ public class PlayerController : Player
 
             base.Update();
             // if we do not have the ball
-            if (!hasBall)
+            if (!HasBall)
             {
                 // check if the ball is in a dribblable position
                 if (CheckIfCanDribble())
@@ -162,7 +128,7 @@ public class PlayerController : Player
                     if (ball.owner == null)
                     {
                         // ensure that we are not sliding
-                        if (!isSliding)
+                        if (!IsSliding)
                         {
                             // ensure that we are not being penalized for fouling
                             if (playerState != PlayerState.Penalized)
@@ -170,7 +136,7 @@ public class PlayerController : Player
                                 // check if it's been long enough since we last had the ball
                                 if (CanDribble)
                                 {
-                                    hasBall = true;
+                                    HasBall = true;
                                     ball.SetOwner(this);
                                     Debug.Log("New owner");
                                     ball.transform.position = transform.position + transform.forward * 1.5f;
@@ -222,12 +188,12 @@ public class PlayerController : Player
     {
         if (IsGrounded && playerState == PlayerState.Playing)
         {
-            if (hasBall)
+            if (HasBall)
             {
                 BallStolen();
             }
             IsGrounded = false;
-            isJumping = true;
+            IsJumping = true;
             Rb.velocity = new Vector3(Rb.velocity.x, jumpForce, Rb.velocity.z);
         }
     }
@@ -265,15 +231,15 @@ public class PlayerController : Player
 
     public void Slide(InputAction.CallbackContext context)
     {  
-        if (isSliding || context.canceled || !IsGrounded || playerState != PlayerState.Playing || !canSlide || hasBall)
+        if (IsSliding || context.canceled || !IsGrounded || playerState != PlayerState.Playing || !CanSlide || HasBall)
         {
             return;
         }
 
-        isSliding = true;
-        slideDirection = transform.forward;
-        slideDirection.y = 0;
-        slideDirection = slideDirection.normalized;
+        IsSliding = true;
+        //slideDirection = transform.forward;
+        //slideDirection.y = 0;
+        //slideDirection = slideDirection.normalized;
         //Vector3.Dot(slideDirection,)
         //slideDirection *= Vector3.Project(rb.velocity, slideDirection).magnitude;
         //animator.SetBool("isSliding", true);
@@ -311,11 +277,11 @@ public class PlayerController : Player
     {
         if (context.canceled)
         {
-            GameplayManager.instance.PlayerRequestedRestart(this, true);
+            //GameplayManager.instance.PlayerRequestedRestart(this, true);
         }
         else
         {
-            GameplayManager.instance.PlayerRequestedRestart(this);
+            //GameplayManager.instance.PlayerRequestedRestart(this);
         }
     }
 
@@ -345,7 +311,7 @@ public class PlayerController : Player
         if (Time.time - previousMovementTime > .25f)
         {
             previousMovementTime = Time.time;
-            SelectSidesGui.instance.PlayerMovedLeftOrRight(this, playerInput, true, guiSection);
+            //SelectSidesGui.instance.PlayerMovedLeftOrRight(this, playerInput, true, guiSection);
         }
 
     }
@@ -358,7 +324,7 @@ public class PlayerController : Player
         if (Time.time - previousMovementTime > .25f)
         {
             previousMovementTime = Time.time;
-            SelectSidesGui.instance.PlayerMovedLeftOrRight(this, playerInput, false, guiSection);
+            //SelectSidesGui.instance.PlayerMovedLeftOrRight(this, playerInput, false, guiSection);
         }
     }
 
@@ -371,7 +337,7 @@ public class PlayerController : Player
         if (Time.time - previousMovementTime > .25f)
         {
             previousMovementTime = Time.time;
-            SelectSidesGui.instance.PlayerMovedUpOrDown(this, playerInput, true, guiSection);
+            //SelectSidesGui.instance.PlayerMovedUpOrDown(this, playerInput, true, guiSection);
         }
     }
 
@@ -384,7 +350,7 @@ public class PlayerController : Player
         if (Time.time - previousMovementTime > .25f)
         {
             previousMovementTime = Time.time;
-            SelectSidesGui.instance.PlayerMovedUpOrDown(this, playerInput, false, guiSection);
+            //SelectSidesGui.instance.PlayerMovedUpOrDown(this, playerInput, false, guiSection);
         }
     }
 
@@ -396,7 +362,7 @@ public class PlayerController : Player
             {
                 return;
             }
-            SelectSidesGui.instance.PlayerReadiedUp(this, playerInput, true);
+            //SelectSidesGui.instance.PlayerReadiedUp(this, playerInput, true);
         }
     }
     #endregion

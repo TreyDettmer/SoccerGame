@@ -7,12 +7,14 @@ using UnityEngine.UI;
 public class FollowPlayer : MonoBehaviour
 {
 
-    public PlayerController player;
-    private List<Transform> targets = new List<Transform>();
+    private HumanController humanController;
+
+
+
+    [HideInInspector] public Player player;
+    
 
     public Vector3 cameraOffset;
-    private float yAngle = 0f;
-    private float xAngle = 0f;
     public float minYOffset = -10f;
     public float maxYOffset = 80f;
     private float yOffset = 0f;
@@ -37,22 +39,48 @@ public class FollowPlayer : MonoBehaviour
 
     private Camera cam;
     private Transform ballTransform;
+
+    private void Awake()
+    {
+        humanController = GetComponent<HumanController>();
+    }
     // Start is called before the first frame update
     void Start()
     {
+        cam = GetComponent<Camera>();
+    }
 
+    public void SetPlayer(Player _player)
+    {
+        if (_player == null)
+        {
+            player = null;
+            return;
+        }
+        player = _player;
+        if (humanController.teamIndex == 0)
+        {
+
+            cameraOffset.z = -Mathf.Abs(cameraOffset.z);
+
+        }
+        else
+        {
+
+            cameraOffset.z = Mathf.Abs(cameraOffset.z);
+            
+        }
+        transform.position = player.transform.position + cameraOffset;
+        transform.rotation = player.transform.rotation;
+        transform.LookAt(player.transform);
+        ballTransform = FindObjectOfType<Ball>().transform;
     }
 
     public void OnGameplayStart()
     {
-        if (player.teamIndex == 1)
-        {
-            cameraOffset.z *= -1;
-        }
 
-        targets.Add(player.transform);
-        ballTransform = FindObjectOfType<Ball>().transform;
-        targets.Add(ballTransform);
+
+        
         yOffset = cameraOffset.y;
         cam = GetComponent<Camera>();
         Debug.Log(yOffset);
@@ -66,19 +94,21 @@ public class FollowPlayer : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (player.gameState != PlayerController.GameState.Gameplay)
+
+        if (!ballTransform || !player) return;
+        if (player.gameState != Player.GameState.Gameplay)
         {
             return;
         }
         Vector3 newPos = player.transform.position + cameraOffset;
         float ballDiff = Mathf.Abs(ballTransform.position.z - transform.position.z);
         float playerDiff = Mathf.Abs(player.transform.position.z - transform.position.z);
-        if (ballDiff < playerDiff && !player.hasBall)
-        {
+        //if (ballDiff < playerDiff && !player.HasBall)
+        //{
             
-            float zOffset = Mathf.Clamp(ballTransform.position.z - Mathf.Sign(transform.forward.z) * 10f, -500f, 500f);
-            newPos = new Vector3(newPos.x, newPos.y, zOffset);
-        }
+        //    float zOffset = Mathf.Clamp(ballTransform.position.z - Mathf.Sign(transform.forward.z) * 10f, -500f, 500f);
+        //    newPos = new Vector3(newPos.x, newPos.y, zOffset);
+        //}
         Vector3 ballViewportPosition = cam.WorldToViewportPoint(ballTransform.position);
         if (ballViewportPosition.x < 0f || ballViewportPosition.x > 1f)
         {
@@ -113,52 +143,10 @@ public class FollowPlayer : MonoBehaviour
         {
             transform.LookAt(player.transform);
         }
-        //float newZoom = Mathf.Lerp(maxZoom, minZoom, GetGreatestDistance() / zoomLimiter);
-        //cam.fieldOfView = newZoom;
+
 
     }
 
-    Vector3 GetCenterPoint()
-    {
-        if (targets.Count == 1)
-        {
-            return targets[0].position;
-        }
-
-        var bounds = new Bounds(targets[0].position, Vector3.zero);
-        for (int i = 0; i < targets.Count; i++)
-        {
-            bounds.Encapsulate(targets[i].position);
-        }
-        return bounds.center;
-    }
-
-    float GetGreatestDistance()
-    {
-
-        var bounds = new Bounds(targets[0].position, Vector3.zero);
-        for (int i = 0; i < targets.Count; i++)
-        {
-            bounds.Encapsulate(targets[i].position);
-        }
-        return bounds.size.x;
-    }
-
-    public void Orbit(Vector2 movement)
-    {
-        float xMovement = Mathf.Clamp(movement.x, -1f, 1f);
-        float yMovement = Mathf.Clamp(movement.y, -.25f, .25f);
-        yOffset += -yMovement * verticalRotationSpeed;
-        yOffset = Mathf.Clamp(yOffset, minYOffset, maxYOffset);
-        
-        if (rotateAroundPlayer)
-        {
-            
-            Quaternion camTurnAngle = Quaternion.AngleAxis(xMovement * horizontalRotationSpeed, Vector3.up);
-            cameraOffset = new Vector3(cameraOffset.x, yOffset, cameraOffset.z);
-            cameraOffset = camTurnAngle * cameraOffset;
-        }
-    }
 
     // Update is called once per frame
     void Update()
