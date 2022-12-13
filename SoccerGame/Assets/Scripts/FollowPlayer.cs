@@ -52,6 +52,10 @@ public class FollowPlayer : MonoBehaviour
 
     public void SetPlayer(Player _player)
     {
+        if (player != null)
+        {
+            player.SetNewController(null);
+        }
         if (_player == null)
         {
             player = null;
@@ -70,9 +74,9 @@ public class FollowPlayer : MonoBehaviour
             cameraOffset.z = Mathf.Abs(cameraOffset.z);
             
         }
-        transform.position = player.transform.position + cameraOffset;
-        transform.rotation = player.transform.rotation;
-        transform.LookAt(player.transform);
+        //transform.position = player.transform.position + cameraOffset;
+        //transform.rotation = player.transform.rotation;
+        //transform.LookAt(player.transform);
         ballTransform = FindObjectOfType<Ball>().transform;
     }
 

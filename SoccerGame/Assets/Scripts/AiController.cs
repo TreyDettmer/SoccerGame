@@ -5,6 +5,10 @@ using UnityEngine;
 public class AiController : MonoBehaviour
 {
 
+
+
+    public Player myPlayer { get; set; }
+
     [SerializeField]
     private AIState aiState = AIState.Idling;
 
@@ -35,21 +39,53 @@ public class AiController : MonoBehaviour
     }
 
 
-    Player _;
 
     private void Awake()
     {
-        _ = GetComponent<Player>();
+
+        
+    }
+
+    private void OnEnable()
+    {
+        if (myPlayer)
+        {
+            if (myPlayer.HasBall)
+            {
+                UpdateAiState(AIState.Dribbling);
+            }
+            else if (Player.teamWithBall == myPlayer.teamIndex)
+            {
+                UpdateAiState(AIState.Attacking);
+            }
+            if (Player.teamWithBall == -1)
+            {
+                UpdateAiState(AIState.Idling);
+            }
+            else if (Player.teamWithBall != myPlayer.teamIndex)
+            {
+                UpdateAiState(AIState.Defending);
+            }
+
+        }
+    }
+
+    private void OnDisable()
+    {
+        
     }
 
     // Start is called before the first frame update
     void Start()
     {
-        
+        myPlayer = GetComponent<Player>();
+
     }
 
-    public void OnGameplayStart()
+    public void Initialize()
     {
+        myPlayer = GetComponent<Player>();
+        shotPlacements.Clear();
         float currentYOffset = 1f;
         while (currentYOffset <= (shotPlacementMaxYHeight + 1f) - ((shotPlacementMaxYHeight) / (shotPlacementStep + 1f)))
         {
@@ -58,11 +94,45 @@ public class AiController : MonoBehaviour
             while (currentXOffset <= shotPlacementMaxXOffset - ((2f * shotPlacementMaxXOffset) / (shotPlacementStep + 1f)))
             {
 
-                shotPlacements.Add(_.opponentsGoalsPosition + new Vector3(currentXOffset, currentYOffset, 0f));
+                shotPlacements.Add(myPlayer.opponentsGoalsPosition + new Vector3(currentXOffset, currentYOffset, 0f));
                 currentXOffset += (2f * shotPlacementMaxXOffset) / (shotPlacementStep + 1f);
 
             }
 
+        }
+    }
+
+    public void OnGameplayStart()
+    {
+
+    }
+
+    public void UpdateAiState(AIState _aiState)
+    {
+        if (aiState == _aiState)
+        {
+            // ignore since we're already in this state
+            return;
+        }
+        if (_aiState == AIState.Dribbling)
+        {
+            aiState = AIState.Dribbling;
+        }
+        else if (_aiState == AIState.Defending)
+        {
+            aiState = AIState.Defending;
+        }
+        else if (_aiState == AIState.Shooting)
+        {
+            aiState = AIState.Shooting;
+        }
+        else if (_aiState == AIState.Idling)
+        {
+            aiState = AIState.Idling;
+        }
+        else if (_aiState == AIState.Attacking)
+        {
+            aiState = AIState.Attacking;
         }
     }
 
@@ -74,26 +144,38 @@ public class AiController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        _.horizontalInput = 0f;
-        _.verticalInput = 0f;
+        myPlayer.horizontalInput = 0f;
+        myPlayer.verticalInput = 0f;
         GetInput();
     }
 
 
     private void GetInput()
     {
-        Vector3 desiredPosition = CalculateDesiredPosition();
+        desiredPosition = CalculateDesiredPosition();
         Vector3 position = transform.position;
         position.y = 0;
         desiredPosition.y = 0;
-        Vector3 relativeDirection = transform.parent.InverseTransformDirection(position - desiredPosition);
+        Vector3 relativeDirection ;
+        if (myPlayer.teamIndex == 1)
+        {
+            relativeDirection = -(position - desiredPosition);
+        }
+        else
+        {
+            relativeDirection = position - desiredPosition;
+        }
+        
         Debug.DrawRay(desiredPosition, Vector3.up * 5f, Color.black);
         Debug.DrawLine(transform.position, desiredPosition, Color.magenta);
-        Debug.DrawLine(_.ball.transform.position, _.myGoalsPosition, Color.blue);
+        Debug.DrawLine(myPlayer.ball.transform.position, myPlayer.myGoalsPosition, Color.blue);
 
-        _.horizontalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.x) / 5f) * -Mathf.Sign(relativeDirection.x);
-        _.verticalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.z) / 5f) * -Mathf.Sign(relativeDirection.z);
 
+        if (myPlayer)
+        {
+            myPlayer.verticalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.z) / 5f) * -Mathf.Sign(relativeDirection.z);
+            myPlayer.horizontalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.x) / 5f) * -Mathf.Sign(relativeDirection.x);
+        }
     }
 
 
@@ -103,15 +185,16 @@ public class AiController : MonoBehaviour
 
         if (aiState == AIState.Dribbling)
         {
-            if ((_.opponentsGoalsPosition - transform.position).sqrMagnitude < 1200)
+            if ((myPlayer.opponentsGoalsPosition - transform.position).sqrMagnitude < 1200)
             {
-                if (!_.isKicking && !isLiningUpShot)
+                if (!myPlayer.isKicking && !isLiningUpShot)
                 {
                     Vector3 potentialShotPlacement = CheckForShotPath();
                     if (potentialShotPlacement != Vector3.zero)
                     {
                         currentShotPlacement = potentialShotPlacement;
                         isLiningUpShot = true;
+                        Debug.Log("Shooting!");
                         StartCoroutine(LineUpShotRoutine(1f));
                         return currentShotPlacement;
                     }
@@ -121,21 +204,21 @@ public class AiController : MonoBehaviour
                     return currentShotPlacement;
                 }
             }
-            return _.opponentsGoalsPosition;
+            return myPlayer.opponentsGoalsPosition;
         }
         else if (aiState == AIState.Defending)
         {
             CheckForOpponentToDefend();
             if (opponentImDefending != null)
             {
-                if (_.ball.owner == opponentImDefending)
+                if (myPlayer.ball.owner == opponentImDefending)
                 {
                     // point between my opponent and our goal
-                    Vector3 nearestPoint = FindNearestPointOnLine(opponentImDefending.transform.position, _.myGoalsPosition, transform.position);
+                    Vector3 nearestPoint = FindNearestPointOnLine(opponentImDefending.transform.position, myPlayer.myGoalsPosition, transform.position);
                     if ((transform.position - nearestPoint).sqrMagnitude < 10f)
                     {
                         // if we are between the oppponent and our goal, move towards the opponent
-                        return _.ball.transform.position;
+                        return myPlayer.ball.transform.position;
                     }
                     else
                     {
@@ -146,27 +229,27 @@ public class AiController : MonoBehaviour
                 else
                 {
                     // move to center point of triangle created by ball, goal, and opponent
-                    return FindCentroid(_.ball.transform.position, _.myGoalsPosition, opponentImDefending.transform.position);
+                    return FindCentroid(myPlayer.ball.transform.position, myPlayer.myGoalsPosition, opponentImDefending.transform.position);
                 }
             }
-            return FindNearestPointOnLine(_.ball.transform.position, _.myGoalsPosition, transform.position);
+            return FindNearestPointOnLine(myPlayer.ball.transform.position, myPlayer.myGoalsPosition, transform.position);
         }
         else if (aiState == AIState.Shooting)
         {
-            return _.opponentsGoalsPosition;
+            return myPlayer.opponentsGoalsPosition;
         }
         else if (aiState == AIState.Idling)
         {
 
             if (Player.teamWithBall == -1)
             {
-                return _.ball.transform.position;
+                return myPlayer.ball.transform.position;
             }
             return transform.position;
         }
         else if (aiState == AIState.Attacking)
         {
-            return new Vector3(transform.position.x, 0f, _.opponentsGoalsPosition.z);
+            return new Vector3(transform.position.x, 0f, myPlayer.opponentsGoalsPosition.z);
         }
 
         return transform.position;
@@ -195,13 +278,13 @@ public class AiController : MonoBehaviour
 
     private void CheckForOpponentToDefend()
     {
-        if (_.opponents.Count > 0)
+        if (myPlayer.opponents.Count > 0)
         {
             float nearestOpponentSquareDistance = 1000f;
             int nearestOpponentIndex = 0;
-            for (int opponentIndex = 0; opponentIndex < _.opponents.Count; opponentIndex++)
+            for (int opponentIndex = 0; opponentIndex < myPlayer.opponents.Count; opponentIndex++)
             {
-                float squareDistance = (transform.position - _.opponents[opponentIndex].transform.position).sqrMagnitude;
+                float squareDistance = (transform.position - myPlayer.opponents[opponentIndex].transform.position).sqrMagnitude;
                 if (squareDistance < nearestOpponentSquareDistance)
                 {
                     nearestOpponentSquareDistance = squareDistance;
@@ -211,13 +294,13 @@ public class AiController : MonoBehaviour
 
             if (nearestOpponentSquareDistance <= detectionRadius * detectionRadius)
             {
-                if ((transform.position - _.ball.transform.position).sqrMagnitude < nearestOpponentSquareDistance)
+                if ((transform.position - myPlayer.ball.transform.position).sqrMagnitude < nearestOpponentSquareDistance)
                 {
                     opponentImDefending = null;
                 }
                 else
                 {
-                    opponentImDefending = _.opponents[nearestOpponentIndex];
+                    opponentImDefending = myPlayer.opponents[nearestOpponentIndex];
                 }
 
             }
@@ -237,7 +320,7 @@ public class AiController : MonoBehaviour
         RaycastHit hit;
         for (int i = 0; i < shotPlacements.Count; i++)
         {
-            if (!Physics.SphereCast(transform.position, shotClearanceNeeded, (shotPlacements[shotPlacementIndex] - transform.position).normalized, out hit, (shotPlacements[i] - transform.position).magnitude, _.playerLayerMask))
+            if (!Physics.SphereCast(transform.position, shotClearanceNeeded, (shotPlacements[shotPlacementIndex] - transform.position).normalized, out hit, (shotPlacements[i] - transform.position).magnitude, myPlayer.playerLayerMask))
             {
                 return shotPlacements[shotPlacementIndex];
             }
@@ -253,7 +336,7 @@ public class AiController : MonoBehaviour
     {
 
         yield return new WaitForSeconds(delay);
-        _.StartKick();
+        myPlayer.StartKick();
         StartCoroutine(ShotPowerRoutine(CalculateShotPower()));
         isLiningUpShot = false;
     }
@@ -287,7 +370,7 @@ public class AiController : MonoBehaviour
     private IEnumerator ShotPowerRoutine(float delay)
     {
         yield return new WaitForSeconds(delay);
-        _.EndKick();
+        myPlayer.EndKick();
     }
 
 }

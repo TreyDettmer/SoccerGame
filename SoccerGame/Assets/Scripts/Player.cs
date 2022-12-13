@@ -49,6 +49,8 @@ public class Player : MonoBehaviour
     public float verticalInput;
     public float currentMaxSpeed;
     private Vector3 unitGoalVelocity;
+    private Vector3 previousPosition;
+    private Vector3 currentPosition;
 
     [Header("Physics")]
     public float defaultHeight;
@@ -84,6 +86,7 @@ public class Player : MonoBehaviour
     [HideInInspector]
     public Ball ball;
     public Rigidbody ballRb;
+    public AiController aiController;
 
 
     #region Info
@@ -137,7 +140,9 @@ public class Player : MonoBehaviour
 
     #region Appearance
     [Header("Appearance")]
-    public MeshRenderer meshRenderer;
+    public GameObject[] blueTeamSkins;
+    public GameObject[] redTeamSkins;
+    public SkinnedMeshRenderer meshRenderer;
     public Material playingMaterial;
     public Material penalizedMaterial;
     public Animator animator;
@@ -191,6 +196,8 @@ public class Player : MonoBehaviour
         myGoalsPosition = GameplayManager.instance.GetGoalPositionForTeam(teamIndex);
         opponentsGoalsPosition = teamIndex == 0 ? GameplayManager.instance.GetGoalPositionForTeam(1) : GameplayManager.instance.GetGoalPositionForTeam(0);
         playerLayerMask = LayerMask.NameToLayer("Player");
+        aiController = GetComponent<AiController>();
+        aiController.Initialize();
     }
 
     public void OnGameplayStart()
@@ -240,6 +247,7 @@ public class Player : MonoBehaviour
                                     HasBall = true;
                                     ball.SetOwner(this);
                                     Debug.Log("New owner");
+                                    aiController.UpdateAiState(AiController.AIState.Dribbling);
                                     ball.transform.position = transform.position + transform.forward * 1.5f;
                                 }
                             }
@@ -273,7 +281,10 @@ public class Player : MonoBehaviour
                     kickHeightCurveValue = kickHeightCurve.Evaluate(kickBackswingElapsedTime / maxKickBackswingTime);
                 }
                 kickHeightForce = kickHeightFactor * kickHeightCurveValue;
-                cameraPlayerGui.UpdatePowerMeter(kickBackswingElapsedTime / maxKickBackswingTime);
+                if (cameraPlayerGui)
+                {
+                    cameraPlayerGui.UpdatePowerMeter(kickBackswingElapsedTime / maxKickBackswingTime);
+                }
                 if (kickBackswingElapsedTime >= maxKickBackswingTime)
                 {
                     EndKick();
@@ -281,10 +292,16 @@ public class Player : MonoBehaviour
             }
 
         }
+
+        
     }
 
     public void FixedUpdate()
     {
+        currentPosition = Rb.position;
+        float speed = ((currentPosition - previousPosition) / Time.fixedDeltaTime).magnitude;
+        previousPosition = currentPosition;
+        animator.SetFloat("speed", Mathf.Clamp(speed / (sprintingMaxSpeed - 4f), 0f, 1f));
         if (playerState == PlayerState.Playing)
         {
             if (IsSliding)
@@ -319,7 +336,7 @@ public class Player : MonoBehaviour
             float velDot = Vector3.Dot(unitGoalVelocity, unitVelocity);
             float accel = acceleration * AccelerationFactorFromDot.Evaluate(velDot);
             Vector3 _goalVelocity = unitGoalVelocity * currentMaxSpeed * speedFactor;
-
+            
             goalVelocity = Vector3.MoveTowards(goalVelocity, _goalVelocity, accel * Time.fixedDeltaTime);
             Vector3 neededAccel = (goalVelocity - Rb.velocity) / Time.fixedDeltaTime;
 
@@ -357,6 +374,7 @@ public class Player : MonoBehaviour
         {
             currentMaxSpeed = maxSpeed;
         }
+        
     }
 
 
@@ -434,7 +452,10 @@ public class Player : MonoBehaviour
 
         }
 
-        cameraPlayerGui.UpdatePowerMeter(0f);
+        if (cameraPlayerGui)
+        {
+            cameraPlayerGui.UpdatePowerMeter(0f);
+        }
         isKicking = false;
         kickBackswingElapsedTime = 0f;
     }
@@ -442,7 +463,18 @@ public class Player : MonoBehaviour
     public virtual void UpdateMaterial()
     {
 
-        meshRenderer.material = playingMaterial;
+        if (teamIndex == 1)
+        {
+            int randomSkinIndex = Random.Range(0, redTeamSkins.Length - 1);
+            redTeamSkins[randomSkinIndex].SetActive(true);
+            meshRenderer = blueTeamSkins[randomSkinIndex].GetComponent<SkinnedMeshRenderer>();
+        }
+        else
+        {
+            int randomSkinIndex = Random.Range(0, blueTeamSkins.Length - 1);
+            blueTeamSkins[randomSkinIndex].SetActive(true);
+            meshRenderer = blueTeamSkins[randomSkinIndex].GetComponent<SkinnedMeshRenderer>();
+        }
     }
 
     public virtual void ResetValues()
@@ -618,17 +650,55 @@ public class Player : MonoBehaviour
 
     public virtual void BallEvent(Player playerWithBall)
     {
+        if (aiController == null)
+        {
+            aiController = GetComponent<AiController>();
+        }
+        if (teamWithBall != teamIndex)
+        {
+            if (teamWithBall == -1)
+            {
+                aiController.UpdateAiState(AiController.AIState.Idling);
+            }
+            else
+            {
+                aiController.UpdateAiState(AiController.AIState.Defending);
+            }
+            
+        }
+        else if (teamWithBall == teamIndex)
+        {
+            if (playerWithBall == this)
+            {
+                aiController.UpdateAiState(AiController.AIState.Dribbling);
+            }
+            else
+            {
+                aiController.UpdateAiState(AiController.AIState.Attacking);
+            }
+        }
     }
 
     public void SetNewController(HumanController humanController)
     {
         if (humanController)
         {
+            if (aiController == null)
+            {
+                aiController = GetComponent<AiController>();
+            }
+            aiController.enabled = false;
             cameraPlayerGui = humanController.cameraPlayerGui;
         }
         else
         {
+            if (aiController == null)
+            {
+                aiController = GetComponent<AiController>();
+                aiController.Initialize();
+            }
             cameraPlayerGui = null;
+            aiController.enabled = true;
         }
     }
 }

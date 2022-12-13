@@ -676,26 +676,6 @@ MonoBehaviour:
       m_Calls: []
   m_ActionEvents:
   - m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 4648292930393590625}
-        m_TargetAssemblyTypeName: HumanController, Assembly-CSharp
-        m_MethodName: Kick
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-    m_ActionId: 6eff65b4-1f13-4ae8-87cc-b629018e7b9c
-    m_ActionName: Player/KickLeftBackswing[/Mouse/leftButton]
-  - m_PersistentCalls:
-      m_Calls: []
-    m_ActionId: c4aa4726-ae18-400c-bca7-6aa9d1312358
-    m_ActionName: Player/KickRightBackswing[/Mouse/rightButton]
-  - m_PersistentCalls:
       m_Calls: []
     m_ActionId: 5f758c5e-4049-47d0-b88a-c2bbe6147fb9
     m_ActionName: Player/Movement[/Keyboard/w,/Keyboard/s,/Keyboard/a,/Keyboard/d]
@@ -715,14 +695,6 @@ MonoBehaviour:
         m_CallState: 2
     m_ActionId: 9d911158-5f24-4310-9147-2868ab0b9cbc
     m_ActionName: Player/Jump[/Keyboard/space]
-  - m_PersistentCalls:
-      m_Calls: []
-    m_ActionId: c066485f-65c0-4d3f-ab24-c29b196b0e2a
-    m_ActionName: Player/KickLeftDownswing[/Mouse/leftButton]
-  - m_PersistentCalls:
-      m_Calls: []
-    m_ActionId: 2013e239-ac14-4a42-8a78-3057bdfe2385
-    m_ActionName: Player/KickRightDownswing[/Mouse/rightButton]
   - m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 4648292930393590625}
@@ -755,10 +727,6 @@ MonoBehaviour:
         m_CallState: 2
     m_ActionId: 2591cb12-f087-4fc2-b497-6edf1703fa03
     m_ActionName: Player/Slide[/Mouse/rightButton]
-  - m_PersistentCalls:
-      m_Calls: []
-    m_ActionId: 9d07ec6d-11f3-4b80-a69a-a3d72818ceee
-    m_ActionName: Player/Orbit[/Mouse/delta]
   - m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 4648292930393590625}

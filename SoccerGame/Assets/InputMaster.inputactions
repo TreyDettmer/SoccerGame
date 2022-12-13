@@ -6,24 +6,6 @@
             "id": "e2717be1-1358-441d-82c1-48e6c1dca397",
             "actions": [
                 {
-                    "name": "KickLeftBackswing",
-                    "type": "Button",
-                    "id": "6eff65b4-1f13-4ae8-87cc-b629018e7b9c",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "KickRightBackswing",
-                    "type": "Button",
-                    "id": "c4aa4726-ae18-400c-bca7-6aa9d1312358",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
                     "name": "Movement",
                     "type": "Value",
                     "id": "5f758c5e-4049-47d0-b88a-c2bbe6147fb9",
@@ -36,24 +18,6 @@
                     "name": "Jump",
                     "type": "Button",
                     "id": "9d911158-5f24-4310-9147-2868ab0b9cbc",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "KickLeftDownswing",
-                    "type": "Button",
-                    "id": "c066485f-65c0-4d3f-ab24-c29b196b0e2a",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "KickRightDownswing",
-                    "type": "Button",
-                    "id": "2013e239-ac14-4a42-8a78-3057bdfe2385",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -76,15 +40,6 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
-                },
-                {
-                    "name": "Orbit",
-                    "type": "Value",
-                    "id": "9d07ec6d-11f3-4b80-a69a-a3d72818ceee",
-                    "expectedControlType": "Vector2",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": true
                 },
                 {
                     "name": "ChipModifier",
@@ -115,28 +70,6 @@
                 }
             ],
             "bindings": [
-                {
-                    "name": "",
-                    "id": "9ccdd14c-26b1-4bc1-9b31-16bf3cda210c",
-                    "path": "<Mouse>/leftButton",
-                    "interactions": "Press",
-                    "processors": "",
-                    "groups": "Keyboard and mouse",
-                    "action": "KickLeftBackswing",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "94c68114-9f00-4e40-ae44-8a2be5cacd08",
-                    "path": "<Gamepad>/leftTrigger",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "Gamepad",
-                    "action": "KickLeftBackswing",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
                 {
                     "name": "WASD",
                     "id": "93f7e20e-71af-4268-8b9b-1be333b3a7d0",
@@ -227,72 +160,6 @@
                 },
                 {
                     "name": "",
-                    "id": "80059a8c-bda0-4bb7-8e93-3a0d0062400d",
-                    "path": "<Mouse>/leftButton",
-                    "interactions": "Press(behavior=1)",
-                    "processors": "",
-                    "groups": "Keyboard and mouse",
-                    "action": "KickLeftDownswing",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "335e2cea-c1ac-4fb0-a1b8-06f4a4d290c5",
-                    "path": "<Gamepad>/leftTrigger",
-                    "interactions": "Press(behavior=1)",
-                    "processors": "",
-                    "groups": "Gamepad",
-                    "action": "KickLeftDownswing",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "b58d3c7b-b72b-4071-917e-60c903bded47",
-                    "path": "<Mouse>/rightButton",
-                    "interactions": "Press",
-                    "processors": "",
-                    "groups": "Keyboard and mouse",
-                    "action": "KickRightBackswing",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "bc2b939b-5cc5-4357-9cea-cc5ab837eedc",
-                    "path": "<Gamepad>/rightTrigger",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "Gamepad",
-                    "action": "KickRightBackswing",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "df357242-1a97-4e0f-abc6-769ab535e1ff",
-                    "path": "<Mouse>/rightButton",
-                    "interactions": "Press(behavior=1)",
-                    "processors": "",
-                    "groups": "Keyboard and mouse",
-                    "action": "KickRightDownswing",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "42f8a102-8970-4329-ba03-2aa5bc3f7ddc",
-                    "path": "<Gamepad>/rightTrigger",
-                    "interactions": "Press(behavior=1)",
-                    "processors": "",
-                    "groups": "Gamepad",
-                    "action": "KickRightDownswing",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "45413d6a-f48e-4f48-997d-25a198c857cf",
                     "path": "<Gamepad>/buttonEast",
                     "interactions": "",
@@ -332,28 +199,6 @@
                     "processors": "",
                     "groups": "Gamepad",
                     "action": "Slide",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "1ff50419-9f94-4f0d-b84b-9ca434932653",
-                    "path": "<Gamepad>/rightStick",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "Gamepad",
-                    "action": "Orbit",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "105bce8e-70da-4ad3-8182-7b98005405a3",
-                    "path": "<Mouse>/delta",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "Keyboard and mouse",
-                    "action": "Orbit",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },

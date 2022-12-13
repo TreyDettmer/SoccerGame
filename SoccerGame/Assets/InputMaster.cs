@@ -28,24 +28,6 @@ public partial class @InputMaster : IInputActionCollection2, IDisposable
             ""id"": ""e2717be1-1358-441d-82c1-48e6c1dca397"",
             ""actions"": [
                 {
-                    ""name"": ""KickLeftBackswing"",
-                    ""type"": ""Button"",
-                    ""id"": ""6eff65b4-1f13-4ae8-87cc-b629018e7b9c"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""KickRightBackswing"",
-                    ""type"": ""Button"",
-                    ""id"": ""c4aa4726-ae18-400c-bca7-6aa9d1312358"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
                     ""name"": ""Movement"",
                     ""type"": ""Value"",
                     ""id"": ""5f758c5e-4049-47d0-b88a-c2bbe6147fb9"",
@@ -58,24 +40,6 @@ public partial class @InputMaster : IInputActionCollection2, IDisposable
                     ""name"": ""Jump"",
                     ""type"": ""Button"",
                     ""id"": ""9d911158-5f24-4310-9147-2868ab0b9cbc"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""KickLeftDownswing"",
-                    ""type"": ""Button"",
-                    ""id"": ""c066485f-65c0-4d3f-ab24-c29b196b0e2a"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""KickRightDownswing"",
-                    ""type"": ""Button"",
-                    ""id"": ""2013e239-ac14-4a42-8a78-3057bdfe2385"",
                     ""expectedControlType"": ""Button"",
                     ""processors"": """",
                     ""interactions"": """",
@@ -98,15 +62,6 @@ public partial class @InputMaster : IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Orbit"",
-                    ""type"": ""Value"",
-                    ""id"": ""9d07ec6d-11f3-4b80-a69a-a3d72818ceee"",
-                    ""expectedControlType"": ""Vector2"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": true
                 },
                 {
                     ""name"": ""ChipModifier"",
@@ -137,28 +92,6 @@ public partial class @InputMaster : IInputActionCollection2, IDisposable
                 }
             ],
             ""bindings"": [
-                {
-                    ""name"": """",
-                    ""id"": ""9ccdd14c-26b1-4bc1-9b31-16bf3cda210c"",
-                    ""path"": ""<Mouse>/leftButton"",
-                    ""interactions"": ""Press"",
-                    ""processors"": """",
-                    ""groups"": ""Keyboard and mouse"",
-                    ""action"": ""KickLeftBackswing"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""94c68114-9f00-4e40-ae44-8a2be5cacd08"",
-                    ""path"": ""<Gamepad>/leftTrigger"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": ""Gamepad"",
-                    ""action"": ""KickLeftBackswing"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
                 {
                     ""name"": ""WASD"",
                     ""id"": ""93f7e20e-71af-4268-8b9b-1be333b3a7d0"",
@@ -249,72 +182,6 @@ public partial class @InputMaster : IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""80059a8c-bda0-4bb7-8e93-3a0d0062400d"",
-                    ""path"": ""<Mouse>/leftButton"",
-                    ""interactions"": ""Press(behavior=1)"",
-                    ""processors"": """",
-                    ""groups"": ""Keyboard and mouse"",
-                    ""action"": ""KickLeftDownswing"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""335e2cea-c1ac-4fb0-a1b8-06f4a4d290c5"",
-                    ""path"": ""<Gamepad>/leftTrigger"",
-                    ""interactions"": ""Press(behavior=1)"",
-                    ""processors"": """",
-                    ""groups"": ""Gamepad"",
-                    ""action"": ""KickLeftDownswing"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""b58d3c7b-b72b-4071-917e-60c903bded47"",
-                    ""path"": ""<Mouse>/rightButton"",
-                    ""interactions"": ""Press"",
-                    ""processors"": """",
-                    ""groups"": ""Keyboard and mouse"",
-                    ""action"": ""KickRightBackswing"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""bc2b939b-5cc5-4357-9cea-cc5ab837eedc"",
-                    ""path"": ""<Gamepad>/rightTrigger"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": ""Gamepad"",
-                    ""action"": ""KickRightBackswing"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""df357242-1a97-4e0f-abc6-769ab535e1ff"",
-                    ""path"": ""<Mouse>/rightButton"",
-                    ""interactions"": ""Press(behavior=1)"",
-                    ""processors"": """",
-                    ""groups"": ""Keyboard and mouse"",
-                    ""action"": ""KickRightDownswing"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""42f8a102-8970-4329-ba03-2aa5bc3f7ddc"",
-                    ""path"": ""<Gamepad>/rightTrigger"",
-                    ""interactions"": ""Press(behavior=1)"",
-                    ""processors"": """",
-                    ""groups"": ""Gamepad"",
-                    ""action"": ""KickRightDownswing"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
                     ""id"": ""45413d6a-f48e-4f48-997d-25a198c857cf"",
                     ""path"": ""<Gamepad>/buttonEast"",
                     ""interactions"": """",
@@ -354,28 +221,6 @@ public partial class @InputMaster : IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": ""Gamepad"",
                     ""action"": ""Slide"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""1ff50419-9f94-4f0d-b84b-9ca434932653"",
-                    ""path"": ""<Gamepad>/rightStick"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": ""Gamepad"",
-                    ""action"": ""Orbit"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""105bce8e-70da-4ad3-8182-7b98005405a3"",
-                    ""path"": ""<Mouse>/delta"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": ""Keyboard and mouse"",
-                    ""action"": ""Orbit"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -643,15 +488,10 @@ public partial class @InputMaster : IInputActionCollection2, IDisposable
 }");
         // Player
         m_Player = asset.FindActionMap("Player", throwIfNotFound: true);
-        m_Player_KickLeftBackswing = m_Player.FindAction("KickLeftBackswing", throwIfNotFound: true);
-        m_Player_KickRightBackswing = m_Player.FindAction("KickRightBackswing", throwIfNotFound: true);
         m_Player_Movement = m_Player.FindAction("Movement", throwIfNotFound: true);
         m_Player_Jump = m_Player.FindAction("Jump", throwIfNotFound: true);
-        m_Player_KickLeftDownswing = m_Player.FindAction("KickLeftDownswing", throwIfNotFound: true);
-        m_Player_KickRightDownswing = m_Player.FindAction("KickRightDownswing", throwIfNotFound: true);
         m_Player_Kick = m_Player.FindAction("Kick", throwIfNotFound: true);
         m_Player_Slide = m_Player.FindAction("Slide", throwIfNotFound: true);
-        m_Player_Orbit = m_Player.FindAction("Orbit", throwIfNotFound: true);
         m_Player_ChipModifier = m_Player.FindAction("ChipModifier", throwIfNotFound: true);
         m_Player_RequestRestart = m_Player.FindAction("RequestRestart", throwIfNotFound: true);
         m_Player_Sprint = m_Player.FindAction("Sprint", throwIfNotFound: true);
@@ -721,15 +561,10 @@ public partial class @InputMaster : IInputActionCollection2, IDisposable
     // Player
     private readonly InputActionMap m_Player;
     private IPlayerActions m_PlayerActionsCallbackInterface;
-    private readonly InputAction m_Player_KickLeftBackswing;
-    private readonly InputAction m_Player_KickRightBackswing;
     private readonly InputAction m_Player_Movement;
     private readonly InputAction m_Player_Jump;
-    private readonly InputAction m_Player_KickLeftDownswing;
-    private readonly InputAction m_Player_KickRightDownswing;
     private readonly InputAction m_Player_Kick;
     private readonly InputAction m_Player_Slide;
-    private readonly InputAction m_Player_Orbit;
     private readonly InputAction m_Player_ChipModifier;
     private readonly InputAction m_Player_RequestRestart;
     private readonly InputAction m_Player_Sprint;
@@ -737,15 +572,10 @@ public partial class @InputMaster : IInputActionCollection2, IDisposable
     {
         private @InputMaster m_Wrapper;
         public PlayerActions(@InputMaster wrapper) { m_Wrapper = wrapper; }
-        public InputAction @KickLeftBackswing => m_Wrapper.m_Player_KickLeftBackswing;
-        public InputAction @KickRightBackswing => m_Wrapper.m_Player_KickRightBackswing;
         public InputAction @Movement => m_Wrapper.m_Player_Movement;
         public InputAction @Jump => m_Wrapper.m_Player_Jump;
-        public InputAction @KickLeftDownswing => m_Wrapper.m_Player_KickLeftDownswing;
-        public InputAction @KickRightDownswing => m_Wrapper.m_Player_KickRightDownswing;
         public InputAction @Kick => m_Wrapper.m_Player_Kick;
         public InputAction @Slide => m_Wrapper.m_Player_Slide;
-        public InputAction @Orbit => m_Wrapper.m_Player_Orbit;
         public InputAction @ChipModifier => m_Wrapper.m_Player_ChipModifier;
         public InputAction @RequestRestart => m_Wrapper.m_Player_RequestRestart;
         public InputAction @Sprint => m_Wrapper.m_Player_Sprint;
@@ -758,33 +588,18 @@ public partial class @InputMaster : IInputActionCollection2, IDisposable
         {
             if (m_Wrapper.m_PlayerActionsCallbackInterface != null)
             {
-                @KickLeftBackswing.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnKickLeftBackswing;
-                @KickLeftBackswing.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnKickLeftBackswing;
-                @KickLeftBackswing.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnKickLeftBackswing;
-                @KickRightBackswing.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnKickRightBackswing;
-                @KickRightBackswing.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnKickRightBackswing;
-                @KickRightBackswing.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnKickRightBackswing;
                 @Movement.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnMovement;
                 @Movement.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnMovement;
                 @Movement.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnMovement;
                 @Jump.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnJump;
                 @Jump.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnJump;
                 @Jump.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnJump;
-                @KickLeftDownswing.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnKickLeftDownswing;
-                @KickLeftDownswing.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnKickLeftDownswing;
-                @KickLeftDownswing.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnKickLeftDownswing;
-                @KickRightDownswing.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnKickRightDownswing;
-                @KickRightDownswing.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnKickRightDownswing;
-                @KickRightDownswing.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnKickRightDownswing;
                 @Kick.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnKick;
                 @Kick.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnKick;
                 @Kick.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnKick;
                 @Slide.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnSlide;
                 @Slide.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnSlide;
                 @Slide.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnSlide;
-                @Orbit.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnOrbit;
-                @Orbit.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnOrbit;
-                @Orbit.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnOrbit;
                 @ChipModifier.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnChipModifier;
                 @ChipModifier.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnChipModifier;
                 @ChipModifier.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnChipModifier;
@@ -798,33 +613,18 @@ public partial class @InputMaster : IInputActionCollection2, IDisposable
             m_Wrapper.m_PlayerActionsCallbackInterface = instance;
             if (instance != null)
             {
-                @KickLeftBackswing.started += instance.OnKickLeftBackswing;
-                @KickLeftBackswing.performed += instance.OnKickLeftBackswing;
-                @KickLeftBackswing.canceled += instance.OnKickLeftBackswing;
-                @KickRightBackswing.started += instance.OnKickRightBackswing;
-                @KickRightBackswing.performed += instance.OnKickRightBackswing;
-                @KickRightBackswing.canceled += instance.OnKickRightBackswing;
                 @Movement.started += instance.OnMovement;
                 @Movement.performed += instance.OnMovement;
                 @Movement.canceled += instance.OnMovement;
                 @Jump.started += instance.OnJump;
                 @Jump.performed += instance.OnJump;
                 @Jump.canceled += instance.OnJump;
-                @KickLeftDownswing.started += instance.OnKickLeftDownswing;
-                @KickLeftDownswing.performed += instance.OnKickLeftDownswing;
-                @KickLeftDownswing.canceled += instance.OnKickLeftDownswing;
-                @KickRightDownswing.started += instance.OnKickRightDownswing;
-                @KickRightDownswing.performed += instance.OnKickRightDownswing;
-                @KickRightDownswing.canceled += instance.OnKickRightDownswing;
                 @Kick.started += instance.OnKick;
                 @Kick.performed += instance.OnKick;
                 @Kick.canceled += instance.OnKick;
                 @Slide.started += instance.OnSlide;
                 @Slide.performed += instance.OnSlide;
                 @Slide.canceled += instance.OnSlide;
-                @Orbit.started += instance.OnOrbit;
-                @Orbit.performed += instance.OnOrbit;
-                @Orbit.canceled += instance.OnOrbit;
                 @ChipModifier.started += instance.OnChipModifier;
                 @ChipModifier.performed += instance.OnChipModifier;
                 @ChipModifier.canceled += instance.OnChipModifier;
@@ -923,15 +723,10 @@ public partial class @InputMaster : IInputActionCollection2, IDisposable
     }
     public interface IPlayerActions
     {
-        void OnKickLeftBackswing(InputAction.CallbackContext context);
-        void OnKickRightBackswing(InputAction.CallbackContext context);
         void OnMovement(InputAction.CallbackContext context);
         void OnJump(InputAction.CallbackContext context);
-        void OnKickLeftDownswing(InputAction.CallbackContext context);
-        void OnKickRightDownswing(InputAction.CallbackContext context);
         void OnKick(InputAction.CallbackContext context);
         void OnSlide(InputAction.CallbackContext context);
-        void OnOrbit(InputAction.CallbackContext context);
         void OnChipModifier(InputAction.CallbackContext context);
         void OnRequestRestart(InputAction.CallbackContext context);
         void OnSprint(InputAction.CallbackContext context);

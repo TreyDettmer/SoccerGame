@@ -28,11 +28,6 @@ public class GameplayManager : MonoBehaviour
     [SerializeField]
     float countdownTime = 3f;
 
-    public Material team0PlayingMaterial;
-    public Material team0PenalizedMaterial;
-    public Material team1PlayingMaterial;
-    public Material team1PenalizedMaterial;
-
     [SerializeField]
     Transform ballSpawnPointTeam0;
     [SerializeField]
@@ -76,8 +71,8 @@ public class GameplayManager : MonoBehaviour
         else
         {
 
-            numberOfAiOnTeam0 = 0;// MatchSettings.instance.numberOfAiOnTeam0;
-            numberOfAiOnTeam1 = 0;// MatchSettings.instance.numberOfAiOnTeam1;
+            numberOfAiOnTeam0 = MatchSettings.instance.numberOfAiOnTeam0;
+            numberOfAiOnTeam1 = MatchSettings.instance.numberOfAiOnTeam1;
             List<PlayerInput> team0PlayerInputs = MatchSettings.instance.team0PlayerInputs;
             List<PlayerInput> team1PlayerInputs = MatchSettings.instance.team1PlayerInputs;
             for (int i = 0; i < team0PlayerInputs.Count; i++)
@@ -178,15 +173,11 @@ public class GameplayManager : MonoBehaviour
         player.ResetValues();
         if (player.teamIndex == 0)
         {
-            player.playingMaterial = team0PlayingMaterial;
-            player.penalizedMaterial = team0PenalizedMaterial;
             player.UpdateMaterial();
             MinimapController.instance.CreatePlayerCanvasPrefab(player, new Color(0f, 0f, 1f));
         }
         else
         {
-            player.playingMaterial = team1PlayingMaterial;
-            player.penalizedMaterial = team1PenalizedMaterial;
             player.UpdateMaterial();
             MinimapController.instance.CreatePlayerCanvasPrefab(player, new Color(1f, 0f, 0f));
         }
@@ -196,18 +187,20 @@ public class GameplayManager : MonoBehaviour
     {
         for (int i = 0; i < numberOfAiOnTeam0; i++)
         {
-            Player player = Instantiate(aiPlayerObjectPrefab).GetComponent<Player>();
+            Player player = Instantiate(playerPrefab).GetComponent<Player>();
             player.teamIndex = 0;
             teams[0].Add(player);
             players.Add(player);
+            player.UpdateGameState(Player.GameState.Gameplay);
 
         }
         for (int i = 0; i < numberOfAiOnTeam1; i++)
         {
-            Player player = Instantiate(aiPlayerObjectPrefab).GetComponent<Player>();
+            Player player = Instantiate(playerPrefab).GetComponent<Player>();
             player.teamIndex = 1;
             teams[1].Add(player);
             players.Add(player);
+            player.UpdateGameState(Player.GameState.Gameplay);
         }
     }
 
@@ -403,6 +396,45 @@ public class GameplayManager : MonoBehaviour
     {
         Player.teamWithBall = teamIndex;
         Player playerWithBall = ball.owner;
+
+        
+        if (playerWithBall != null)
+        {
+            if (playerWithBall.GetComponent<AiController>().enabled)
+            {
+                bool updatedControlledBy = false;
+                for (int i = 0; i < playerInputs.Count; i++)
+                {
+                    if (playerInputs[i].GetComponent<HumanController>().teamIndex == playerWithBall.teamIndex)
+                    {
+
+                        //update to controlled player
+                        if (ball.lastKickedBy)
+                        {
+                            if (ball.lastKickedBy == playerInputs[i].GetComponent<Player>())
+                            {
+                                updatedControlledBy = true;
+                                playerWithBall.SetNewController(playerInputs[i].GetComponent<HumanController>());
+                                playerInputs[i].GetComponent<HumanController>().SetNewPlayer(playerWithBall);
+                            }
+                        }
+
+
+                    }
+                }
+                if (!updatedControlledBy)
+                {
+                    for (int i = 0; i < playerInputs.Count; i++)
+                    {
+                        if (playerInputs[i].GetComponent<HumanController>().teamIndex == playerWithBall.teamIndex)
+                        {
+                            playerWithBall.SetNewController(playerInputs[i].GetComponent<HumanController>());
+                            playerInputs[i].GetComponent<HumanController>().SetNewPlayer(playerWithBall);
+                        }
+                    }
+                }
+            }
+        }
         for (int i = 0; i < players.Count; i++)
         {
             players[i].BallEvent(playerWithBall);
