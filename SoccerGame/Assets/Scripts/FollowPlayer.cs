@@ -27,11 +27,7 @@ public class FollowPlayer : MonoBehaviour
     public bool lookAtPlayer = false;
 
     public bool rotateAroundPlayer = true;
-    public float horizontalRotationSpeed = 5.0f;
-    public float verticalRotationSpeed = 2.0f;
-    public float minZoom = 105f;
-    public float maxZoom = 60f;
-    public float zoomLimiter = 50f;
+    public float transitionSpeed = 10f;
 
     public GameObject ballDirectionImageLeft;
     public GameObject ballDirectionImageRight;
@@ -39,7 +35,8 @@ public class FollowPlayer : MonoBehaviour
 
     private Camera cam;
     private Transform ballTransform;
-
+    private bool isTransitioningToNewPlayer = false;
+    
     private void Awake()
     {
         humanController = GetComponent<HumanController>();
@@ -55,6 +52,7 @@ public class FollowPlayer : MonoBehaviour
         if (player != null)
         {
             player.SetNewController(null);
+            isTransitioningToNewPlayer = true;
         }
         if (_player == null)
         {
@@ -104,7 +102,17 @@ public class FollowPlayer : MonoBehaviour
         {
             return;
         }
+
         Vector3 newPos = player.transform.position + cameraOffset;
+        if (isTransitioningToNewPlayer)
+        {
+            transform.position = Vector3.Slerp(transform.position, newPos, transitionSpeed * Time.fixedDeltaTime);
+            if ((transform.position - newPos).sqrMagnitude < 2f)
+            {
+                isTransitioningToNewPlayer = false;
+            }
+            return;
+        }
         float ballDiff = Mathf.Abs(ballTransform.position.z - transform.position.z);
         float playerDiff = Mathf.Abs(player.transform.position.z - transform.position.z);
         //if (ballDiff < playerDiff && !player.HasBall)

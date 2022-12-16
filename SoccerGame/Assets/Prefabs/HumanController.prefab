@@ -329,7 +329,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -0.000061035156, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &5340754382647953225
@@ -917,17 +917,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   player: {fileID: 0}
-  cameraOffset: {x: 0, y: 3, z: 7}
+  cameraOffset: {x: 0, y: 4, z: 8}
   minYOffset: -10
   maxYOffset: 80
   smoothFactor: 1
   lookInOppositeDirection: 0
   lookAtPlayer: 1
   rotateAroundPlayer: 1
-  horizontalRotationSpeed: 5
-  verticalRotationSpeed: 2
-  minZoom: 105
-  maxZoom: 60
-  zoomLimiter: 50
+  transitionSpeed: 7
   ballDirectionImageLeft: {fileID: 556252550943185050}
   ballDirectionImageRight: {fileID: 301662215581560157}

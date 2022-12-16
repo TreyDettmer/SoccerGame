@@ -51,6 +51,7 @@ public class Player : MonoBehaviour
     private Vector3 unitGoalVelocity;
     private Vector3 previousPosition;
     private Vector3 currentPosition;
+    private Vector3 currentVelocity;
 
     [Header("Physics")]
     public float defaultHeight;
@@ -92,9 +93,11 @@ public class Player : MonoBehaviour
     #region Info
     [HideInInspector] public bool IsSliding { get; set; } = false;
     [SerializeField]
-    private float slideForce = 5f;
+    private float maxSlideForce;
+    private float currentSlideForce;
     [SerializeField]
-    private float maxSlideSpeed = 10f;
+    private float maxSlideSpeed;
+    private float currentMaxSlideSpeed;
     [SerializeField]
     private float slideTime = 1f;
     [SerializeField]
@@ -299,16 +302,17 @@ public class Player : MonoBehaviour
     public void FixedUpdate()
     {
         currentPosition = Rb.position;
-        float speed = ((currentPosition - previousPosition) / Time.fixedDeltaTime).magnitude;
+        currentVelocity = ((currentPosition - previousPosition) / Time.fixedDeltaTime);
+        float speed = currentVelocity.magnitude;
         previousPosition = currentPosition;
         animator.SetFloat("speed", Mathf.Clamp(speed / (sprintingMaxSpeed - 4f), 0f, 1f));
         if (playerState == PlayerState.Playing)
         {
             if (IsSliding)
             {
-                if (Rb.velocity.sqrMagnitude < maxSlideSpeed * maxSlideSpeed)
+                if (Rb.velocity.sqrMagnitude < currentMaxSlideSpeed * currentMaxSlideSpeed)
                 {
-                    Rb.AddForce(slideDirection * slideForce);
+                    Rb.AddForce(slideDirection * currentSlideForce);
 
                 }
                 return;
@@ -566,6 +570,11 @@ public class Player : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
+        // ignore collisions with BallExtension child game object
+        if (collision.GetContact(0).thisCollider.gameObject.name == "BallExtension")
+        {
+            return;
+        }
         if (collision.collider.gameObject.layer == LayerMask.NameToLayer("Ball"))
         {
             if (IsSliding)
@@ -611,17 +620,19 @@ public class Player : MonoBehaviour
         {
             return;
         }
-
+        currentMaxSlideSpeed = Mathf.Clamp01(currentVelocity.magnitude / (sprintingMaxSpeed - 4f)) * maxSlideSpeed;
+        currentSlideForce = Mathf.Clamp01(currentVelocity.magnitude / (sprintingMaxSpeed - 4f)) * maxSlideForce;
         IsSliding = true;
         slideDirection = transform.forward;
         slideDirection.y = 0;
         slideDirection = slideDirection.normalized;
+        animator.SetBool("isSliding", true);
         StartCoroutine(SlideRoutine());
     }
 
     public void EndSlide()
     {
-        //animator.SetBool("isSliding", false);
+        animator.SetBool("isSliding", false);
 
         slidIntoBall = false;
         IsSliding = false;
@@ -642,9 +653,7 @@ public class Player : MonoBehaviour
 
     public IEnumerator SlideRoutine()
     {
-        yield return new WaitForSeconds(slideTime * .75f);
-        //transform.DORotate(new Vector3(90f, 0f, 0f), slideTime / 4f, RotateMode.LocalAxisAdd);
-        yield return new WaitForSeconds(slideTime * .25f);
+        yield return new WaitForSeconds(slideTime);
         EndSlide();
     }
 
