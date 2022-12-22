@@ -12,6 +12,7 @@ public class HumanController : MonoBehaviour
     private InputActionAsset playerInputAsset;
     private InputActionMap gameplayActionMap;
     private InputActionMap selectSidesActionMap;
+    private InputActionMap uiActionMap;
     private PlayerInput playerInput;
     #endregion
 
@@ -42,9 +43,11 @@ public class HumanController : MonoBehaviour
         playerInputAsset = playerInput.actions;
         gameplayActionMap = playerInputAsset.FindActionMap("Player");
         selectSidesActionMap = playerInputAsset.FindActionMap("SelectSides");
+        uiActionMap = playerInputAsset.FindActionMap("UI");
         cameraPlayerGui = GetComponent<PlayerGui>();
         cameraFollowPlayer = GetComponent<FollowPlayer>();
         gameState = Player.GameState.SelectSides;
+        uiActionMap.Disable();
         gameplayActionMap.Disable();
         DontDestroyOnLoad(gameObject);
     }
@@ -81,6 +84,22 @@ public class HumanController : MonoBehaviour
     {
         gameplayActionMap.Disable();
         selectSidesActionMap.Disable();
+    }
+
+    public void ToggleUIActionMap(bool enable)
+    {
+        if (enable)
+        {
+            gameplayActionMap.Disable();
+            selectSidesActionMap.Disable();
+            uiActionMap.Enable();
+        }
+        else
+        {
+            uiActionMap.Disable();
+            selectSidesActionMap.Enable();
+            gameplayActionMap.Enable();
+        }
     }
 
 
@@ -143,7 +162,7 @@ public class HumanController : MonoBehaviour
             }
             else if (context.canceled)
             {
-                myPlayer.EndKick();
+                myPlayer.StopPoweringUpKick();
             }
         }
     }
@@ -173,20 +192,10 @@ public class HumanController : MonoBehaviour
         }
     }
 
-    public void RequestRestart(InputAction.CallbackContext context)
+    public void PauseGame(InputAction.CallbackContext context)
     {
-        if (!myPlayer) return;
-        if (context.canceled)
-        {
-            GameplayManager.instance.RequestedRestart(this, true);
-        }
-        else
-        {
-            GameplayManager.instance.RequestedRestart(this);
-        }
+        GameplayManager.instance.PauseGame();
     }
-
-
 
     public void MoveLeft(InputAction.CallbackContext context)
     {

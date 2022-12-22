@@ -51,7 +51,7 @@ public class Player : MonoBehaviour
     private Vector3 unitGoalVelocity;
     private Vector3 previousPosition;
     private Vector3 currentPosition;
-    private Vector3 currentVelocity;
+    [HideInInspector] public Vector3 currentVelocity;
 
     [Header("Physics")]
     public float defaultHeight;
@@ -79,6 +79,8 @@ public class Player : MonoBehaviour
     public bool canKick = true;
     public bool chipModeEnabled = false;
     public float kickBackswingElapsedTime = 0f;
+    public float poweringUpElapsedTime = 0f;
+    private bool isPoweringUpKick = false;
 
 
     [SerializeField]
@@ -110,8 +112,7 @@ public class Player : MonoBehaviour
     [HideInInspector] public bool CanSlide { get; set; } = true;
     [SerializeField]
     private float ballDribbleDirectionFactor = .3f;
-    [SerializeField]
-    private float sprintingMaxSpeed = 4f;
+    public float sprintingMaxSpeed = 4f;
 
     [HideInInspector] public bool IsSprinting { get; set; } = false;
     [HideInInspector] public bool CanDribble { get; set; } = true;
@@ -142,13 +143,19 @@ public class Player : MonoBehaviour
     public List<Player> opponents = new List<Player>();
 
     #region Appearance
-    [Header("Appearance")]
+    [Header("Appearance and Ragdoll")]
     public GameObject[] blueTeamSkins;
     public GameObject[] redTeamSkins;
     public SkinnedMeshRenderer meshRenderer;
     public Material playingMaterial;
     public Material penalizedMaterial;
     public Animator animator;
+    public GameObject rig;
+    [SerializeField] Collider[] mainColliders;
+    Collider[] ragdollColliders;
+    Rigidbody[] limbsRigidbodies;
+    bool isRagdolled = false;
+    [SerializeField] float ragdollSlideForceMultiplier = 3f;
     #endregion
 
     public PlayerState playerState;
@@ -187,6 +194,9 @@ public class Player : MonoBehaviour
         ballRb = ball.GetComponent<Rigidbody>();
         audioSource = GetComponent<AudioSource>();
         Goalie[] goalieObjects = FindObjectsOfType<Goalie>();
+        ragdollColliders = rig.GetComponentsInChildren<Collider>();
+        limbsRigidbodies = rig.GetComponentsInChildren<Rigidbody>();
+        ToggleRagdoll(false);
         for (int i = 0; i < goalieObjects.Length; i++)
         {
             if (goalieObjects[i].teamIndex == teamIndex)
@@ -220,12 +230,20 @@ public class Player : MonoBehaviour
             animator = GetComponent<Animator>();
             gameState = GameState.Gameplay;
         }
+        if (_gameState == GameState.SelectSides)
+        {
+            gameState = GameState.SelectSides;
+        }
     }
 
 
     
     public void Update()
     {
+        if (isRagdolled)
+        {
+            return;
+        }
         if (gameState == GameState.Gameplay)
         {
 
@@ -263,31 +281,36 @@ public class Player : MonoBehaviour
             if (isKicking)
             {
                 kickBackswingElapsedTime += Time.deltaTime;
-                float kickPowerCurveValue;
-                if (chipModeEnabled)
+                if (isPoweringUpKick)
                 {
-                    kickPowerCurveValue = chipPowerCurve.Evaluate(kickBackswingElapsedTime / maxKickBackswingTime);
-                }
-                else
-                {
-                    kickPowerCurveValue = kickPowerCurve.Evaluate(kickBackswingElapsedTime / maxKickBackswingTime);
+                    poweringUpElapsedTime += Time.deltaTime;
+                    float kickPowerCurveValue;
+                    if (chipModeEnabled)
+                    {
+                        kickPowerCurveValue = chipPowerCurve.Evaluate(poweringUpElapsedTime / maxKickBackswingTime);
+                    }
+                    else
+                    {
+                        kickPowerCurveValue = kickPowerCurve.Evaluate(poweringUpElapsedTime / maxKickBackswingTime);
+                    }
+
+                    kickForce = kickPowerFactor * kickPowerCurveValue;
+                    float kickHeightCurveValue;
+                    if (chipModeEnabled)
+                    {
+                        kickHeightCurveValue = chipHeightCurve.Evaluate(poweringUpElapsedTime / maxKickBackswingTime);
+                    }
+                    else
+                    {
+                        kickHeightCurveValue = kickHeightCurve.Evaluate(poweringUpElapsedTime / maxKickBackswingTime);
+                    }
+                    kickHeightForce = kickHeightFactor * kickHeightCurveValue;
+                    if (cameraPlayerGui)
+                    {
+                        cameraPlayerGui.UpdatePowerMeter(poweringUpElapsedTime / maxKickBackswingTime);
+                    }
                 }
 
-                kickForce = kickPowerFactor * kickPowerCurveValue;
-                float kickHeightCurveValue;
-                if (chipModeEnabled)
-                {
-                    kickHeightCurveValue = chipHeightCurve.Evaluate(kickBackswingElapsedTime / maxKickBackswingTime);
-                }
-                else
-                {
-                    kickHeightCurveValue = kickHeightCurve.Evaluate(kickBackswingElapsedTime / maxKickBackswingTime);
-                }
-                kickHeightForce = kickHeightFactor * kickHeightCurveValue;
-                if (cameraPlayerGui)
-                {
-                    cameraPlayerGui.UpdatePowerMeter(kickBackswingElapsedTime / maxKickBackswingTime);
-                }
                 if (kickBackswingElapsedTime >= maxKickBackswingTime)
                 {
                     EndKick();
@@ -301,19 +324,25 @@ public class Player : MonoBehaviour
 
     public void FixedUpdate()
     {
+        if (isRagdolled)
+        {
+            return;
+        }
         currentPosition = Rb.position;
         currentVelocity = ((currentPosition - previousPosition) / Time.fixedDeltaTime);
         float speed = currentVelocity.magnitude;
         previousPosition = currentPosition;
         animator.SetFloat("speed", Mathf.Clamp(speed / (sprintingMaxSpeed - 4f), 0f, 1f));
-        if (playerState == PlayerState.Playing)
-        {
+        //if (playerState == PlayerState.Playing)
+        //{
             if (IsSliding)
             {
                 if (Rb.velocity.sqrMagnitude < currentMaxSlideSpeed * currentMaxSlideSpeed)
                 {
-                    Rb.AddForce(slideDirection * currentSlideForce);
-
+                    if (playerState == PlayerState.Playing)
+                    {
+                        Rb.AddForce(slideDirection * currentSlideForce);
+                    }
                 }
                 return;
             }
@@ -324,15 +353,17 @@ public class Player : MonoBehaviour
                 goalRotation = Quaternion.LookRotation(unitGoalVelocity, Vector3.up);
                 
                 Quaternion toRotation = Quaternion.LookRotation(unitGoalVelocity, Vector3.up);
-                if (isKicking)
+                if (playerState == PlayerState.Playing)
                 {
-                    transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, kickingRotationSpeed * Time.deltaTime);
+                    if (isKicking)
+                    {
+                        transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, kickingRotationSpeed * Time.deltaTime);
+                    }
+                    else
+                    {
+                        transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, rotationSpeed * Time.deltaTime);
+                    }
                 }
-                else
-                {
-                    transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, rotationSpeed * Time.deltaTime);
-                }
-
             }
 
 
@@ -347,11 +378,14 @@ public class Player : MonoBehaviour
             float maxAccel = maxAccelForce * MaxAccelerationFactorFromDot.Evaluate(velDot) * maxAccelForceFactor;
 
             neededAccel = Vector3.ClampMagnitude(neededAccel, maxAccel);
-            Rb.AddForce(Vector3.Scale(neededAccel * Rb.mass, forceScale));
+            if (playerState == PlayerState.Playing)
+            {
+                Rb.AddForce(Vector3.Scale(neededAccel * Rb.mass, forceScale));
+            }
 
 
 
-        }
+        //}
 
         RaycastHit hit;
         if (Physics.Raycast(groundChecker.position, -transform.up, out hit, defaultHeight, groundLayerMask))
@@ -407,8 +441,28 @@ public class Player : MonoBehaviour
         if (!isKicking && !IsSliding)
         {
             Debug.Log("Starting kick");
+            // determine whether to use left or right foot based on the goal's position
+            float projectionToGoal = Vector3.Dot(opponentsGoalsPosition - transform.position, transform.right);
+            if (projectionToGoal < 0f)
+            {
+                animator.SetTrigger("isKickingRight");
+            }
+            else
+            {
+                animator.SetTrigger("isKickingLeft");
+            }
+            
+            isPoweringUpKick = true;
             isKicking = true;
             canKick = false;
+        }
+    }
+
+    public void StopPoweringUpKick()
+    {
+        if (isPoweringUpKick)
+        {
+            isPoweringUpKick = false;
         }
     }
 
@@ -461,7 +515,10 @@ public class Player : MonoBehaviour
             cameraPlayerGui.UpdatePowerMeter(0f);
         }
         isKicking = false;
+        isPoweringUpKick = false;
+        poweringUpElapsedTime = 0f;
         kickBackswingElapsedTime = 0f;
+        aiController.playerImPassingTo = null;
     }
 
     public virtual void UpdateMaterial()
@@ -605,6 +662,8 @@ public class Player : MonoBehaviour
                 {
                     if (IsSliding && slidIntoBall == false)
                     {
+                        Vector3 forceOfTackle = transform.forward * currentVelocity.magnitude * ragdollSlideForceMultiplier;
+                        collision.collider.GetComponent<Player>().ToggleRagdoll(true, collision.collider, forceOfTackle);
                         GameplayManager.instance.PlayerFoul(this, collision.collider.GetComponent<Player>());
                         Debug.Log("Foul on team " + teamIndex);
                     }
@@ -696,6 +755,7 @@ public class Player : MonoBehaviour
             {
                 aiController = GetComponent<AiController>();
             }
+            aiController.NotifyBrainOfDetachment();
             aiController.enabled = false;
             cameraPlayerGui = humanController.cameraPlayerGui;
         }
@@ -708,6 +768,66 @@ public class Player : MonoBehaviour
             }
             cameraPlayerGui = null;
             aiController.enabled = true;
+        }
+    }
+
+    public void ToggleRagdoll(bool shouldRagdoll = false, Collider collider = null, Vector3 collisionForce = default(Vector3))
+    {
+
+        if (shouldRagdoll)
+        {
+            isRagdolled = true;
+            // disable animator
+            animator.enabled = false;
+
+            // disable main colliders
+            foreach (Collider col in mainColliders)
+            {
+                col.enabled = false;
+            }
+
+            // disable main rigidbody
+            Rb.isKinematic = true;
+
+            // enable ragdoll colliders
+            foreach (Collider col in ragdollColliders)
+            {
+                col.enabled = true;
+            }
+            foreach (Rigidbody rigid in limbsRigidbodies)
+            {
+                rigid.isKinematic = false;
+                if (collider != null)
+                {
+                    rigid.AddForce(collisionForce,ForceMode.Impulse);
+                }
+            }
+
+        }
+        else
+        {
+            foreach (Collider col in ragdollColliders)
+            {
+                col.enabled = false;
+            }
+            foreach (Rigidbody rigid in limbsRigidbodies)
+            {
+                rigid.isKinematic = true;
+            }
+
+            // enable main colliders
+            foreach (Collider col in mainColliders)
+            {
+                col.enabled = true;
+            }
+
+            // enable main rigidbody
+            Rb.isKinematic = false;
+
+            // enable animator
+            animator.enabled = true;
+
+            isRagdolled = false;
         }
     }
 }

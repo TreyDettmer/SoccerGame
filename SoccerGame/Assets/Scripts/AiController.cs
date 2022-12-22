@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class AiController : MonoBehaviour
@@ -21,12 +22,16 @@ public class AiController : MonoBehaviour
     public float shotClearanceNeeded = .5f;
     private Vector3 currentShotPlacement = Vector3.zero;
     private bool isLiningUpShot = false;
+    private bool isLiningUpPass = false;
+    [HideInInspector] public Player playerImPassingTo = null;
 
     private Vector3 desiredPosition = Vector3.zero;
 
     private Player opponentImDefending = null;
     private List<Vector3> shotPlacements = new List<Vector3>();
-
+    private LayerMask goalLayerMask;
+    [HideInInspector] public TeamBrain teamBrain;
+    Transform formationSpot = null;
 
 
     public enum AIState
@@ -34,6 +39,7 @@ public class AiController : MonoBehaviour
         Idling,
         Dribbling,
         Shooting,
+        Passing,
         Attacking,
         Defending
     }
@@ -50,6 +56,7 @@ public class AiController : MonoBehaviour
     {
         if (myPlayer)
         {
+            myPlayer.IsSprinting = true;
             if (myPlayer.HasBall)
             {
                 UpdateAiState(AIState.Dribbling);
@@ -79,7 +86,7 @@ public class AiController : MonoBehaviour
     void Start()
     {
         myPlayer = GetComponent<Player>();
-
+        goalLayerMask = FindObjectOfType<Goal>().gameObject.layer;
     }
 
     public void Initialize()
@@ -134,6 +141,10 @@ public class AiController : MonoBehaviour
         {
             aiState = AIState.Attacking;
         }
+        else if (_aiState == AIState.Passing)
+        {
+            aiState = AIState.Passing;
+        }
     }
 
     // Update is called once per frame
@@ -152,108 +163,317 @@ public class AiController : MonoBehaviour
 
     private void GetInput()
     {
-        desiredPosition = CalculateDesiredPosition();
-        Vector3 position = transform.position;
-        position.y = 0;
-        desiredPosition.y = 0;
-        Vector3 relativeDirection ;
+        if (aiState == AIState.Defending)
+        {
+            //bool amClosestToBall = true;
+            //float sqrMagnitudeFromBall = (myPlayer.ball.transform.position - transform.position).sqrMagnitude;
+            //// Check if i am the closest to the opponent with the ball
+            //for (int i = 0; i < myPlayer.teammates.Count; i++)
+            //{
+            //    float sqrMagnitude = (myPlayer.ball.transform.position - myPlayer.teammates[i].transform.position).sqrMagnitude;
+            //    if (sqrMagnitude < sqrMagnitudeFromBall)
+            //    {
+            //        amClosestToBall = false;
+            //        break;
+            //    }
+            //}
+            teamBrain.StoppedDefendingOpponent(opponentImDefending);
+            // sort opponents by distance
+            List<Player> opponentsSorted = new List<Player>(myPlayer.opponents);
+            opponentsSorted = opponentsSorted.OrderBy(opponent => (transform.position - opponent.transform.position).sqrMagnitude).ToList();
+            Player chosenOpponent = opponentsSorted.Count > 0 ? opponentsSorted[0] : null;
+            for (int i = 0; i < opponentsSorted.Count; i++)
+            {
+                if (!teamBrain.IsOpponentBeingDefended(opponentsSorted[i]))
+                {
+                    chosenOpponent = opponentsSorted[i];
+                    break;
+                }
+            }
+            if (teamBrain.StartedDefendingOpponent(chosenOpponent))
+            {
+                opponentImDefending = chosenOpponent;
+            }
+            else
+            {
+                opponentImDefending = null;
+            }
+            // //Determine if we should be defending the opponent with the ball
+            //if (amClosestToBall)
+            //{
+            //    teamBrain.PlayerStartedDefendingBall(myPlayer);
+            //    opponentImDefending = myPlayer.ball.owner;
+            //}
+            //else
+            //{
+            //    //defend an opponent who does not have the ball
+            //    if (opponentImDefending == myPlayer.ball.owner)
+            //    {
+            //        teamBrain.PlayerStoppedDefendingBall(myPlayer);
+            //    }
+            //    opponentImDefending = FindClosestOpponent();
+            //}
+            //CheckForOpponentToDefend();
+            if (opponentImDefending != null)
+            {
+                DefendOpponent();
+            }
+        }
+        else if (aiState == AIState.Attacking)
+        {
+            GetOpen();
+        }
+        else if (aiState == AIState.Idling)
+        {
+            PursueBall();
+        }
+        else if (aiState == AIState.Dribbling)
+        {
+            DribbleBall();
+        }
+        else if (aiState == AIState.Shooting)
+        {
+            ShootBall();
+        }
+        else if (aiState == AIState.Passing)
+        {
+            PassBall();
+        }
+
+    }
+
+    Player FindClosestOpponent()
+    {
+        float closestOpponentSqrMagnitude = 3000f;
+        Player closestOpponent = myPlayer.ball.owner;
+        for (int i = 0; i < myPlayer.opponents.Count; i++)
+        {
+            if (myPlayer.ball.owner != myPlayer.opponents[i])
+            {
+                float sqrMagnitude = (transform.position - myPlayer.opponents[i].transform.position).sqrMagnitude;
+                if (sqrMagnitude < closestOpponentSqrMagnitude)
+                {
+                    closestOpponentSqrMagnitude = sqrMagnitude;
+                    closestOpponent = myPlayer.opponents[i];
+                }
+            }
+        }
+        return closestOpponent;
+    }
+
+    void ShootBall()
+    {
+        Vector3 direction = currentShotPlacement - transform.position;
+        Vector3 relativeDirection;
         if (myPlayer.teamIndex == 1)
         {
-            relativeDirection = -(position - desiredPosition);
+            relativeDirection = direction;
         }
         else
         {
-            relativeDirection = position - desiredPosition;
+            relativeDirection = -direction;
         }
-        
-        Debug.DrawRay(desiredPosition, Vector3.up * 5f, Color.black);
-        Debug.DrawLine(transform.position, desiredPosition, Color.magenta);
-        Debug.DrawLine(myPlayer.ball.transform.position, myPlayer.myGoalsPosition, Color.blue);
+        myPlayer.verticalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.z) / 8f) * -Mathf.Sign(relativeDirection.z);
+        myPlayer.horizontalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.x) / 8f) * -Mathf.Sign(relativeDirection.x);
+    }
 
-
-        if (myPlayer)
+    void PassBall()
+    {
+        //Vector3 direction = CalculateInterceptCourse(playerImPassingTo.transform.position, playerImPassingTo.currentVelocity, transform.position, myPlayer.sprintingMaxSpeed);
+        Vector3 direction = playerImPassingTo.transform.position - transform.position;
+        Vector3 relativeDirection;
+        if (myPlayer.teamIndex == 1)
         {
-            myPlayer.verticalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.z) / 5f) * -Mathf.Sign(relativeDirection.z);
-            myPlayer.horizontalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.x) / 5f) * -Mathf.Sign(relativeDirection.x);
+            relativeDirection = direction;
         }
+        else
+        {
+            relativeDirection = -direction;
+        }
+        Debug.DrawRay(transform.position + new Vector3(0, 1f, 0f), direction.normalized * 5f,Color.white);
+        desiredPosition = transform.position + direction;
+        myPlayer.verticalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.z) / 8f) * -Mathf.Sign(relativeDirection.z);
+        myPlayer.horizontalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.x) / 8f) * -Mathf.Sign(relativeDirection.x);
+    }
+
+
+    public bool CheckForOpenTeammate()
+    {
+        Player optimalTeammateToPassTo = PitchGrid.instance.FindOptimalTeammateToPassTo(myPlayer);
+        if (optimalTeammateToPassTo != null)
+        {
+            playerImPassingTo = optimalTeammateToPassTo;
+            return true;
+        }
+        return false;
+    }
+
+    void DribbleBall()
+    {
+        Vector3 direction = Vector3.zero;
+        if (CheckForOpenTeammate() && !isLiningUpPass)
+        {
+            Debug.Log("Passing!");
+            isLiningUpPass = true;
+            StartCoroutine(LineUpPassRoutine(1f));
+            UpdateAiState(AIState.Passing);
+            return;
+        }
+        if ((myPlayer.opponentsGoalsPosition - transform.position).sqrMagnitude < 1200)
+        {
+            if (!myPlayer.isKicking && !isLiningUpShot)
+            {
+                Vector3 potentialShotPlacement = CheckForShotPath();
+                if (potentialShotPlacement != Vector3.zero)
+                {
+                    currentShotPlacement = potentialShotPlacement;
+                    isLiningUpShot = true;
+                    Debug.Log("Shooting!");
+                    StartCoroutine(LineUpShotRoutine(1f));
+                    direction = currentShotPlacement - transform.position;
+                    UpdateAiState(AIState.Shooting);
+                    return;
+                }
+            }
+            if (direction == Vector3.zero && currentShotPlacement != Vector3.zero)
+            {
+                direction = currentShotPlacement - transform.position;
+            }
+        }
+        if (direction == Vector3.zero)
+        {
+            direction = myPlayer.opponentsGoalsPosition - transform.position;
+        }
+        Vector3 relativeDirection;
+        if (myPlayer.teamIndex == 1)
+        {
+            relativeDirection = direction;
+        }
+        else
+        {
+            relativeDirection = -direction;
+        }
+        myPlayer.verticalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.z) / 8f) * -Mathf.Sign(relativeDirection.z);
+        myPlayer.horizontalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.x) / 8f) * -Mathf.Sign(relativeDirection.x);
     }
 
 
 
-    private Vector3 CalculateDesiredPosition()
+    void PursueBall()
     {
-
-        if (aiState == AIState.Dribbling)
+        Vector3 direction = CalculateInterceptCourse(myPlayer.ball.transform.position, myPlayer.ballRb.velocity, transform.position, myPlayer.sprintingMaxSpeed);
+        Vector3 relativeDirection;
+        if (myPlayer.teamIndex == 1)
         {
-            if ((myPlayer.opponentsGoalsPosition - transform.position).sqrMagnitude < 1200)
+            relativeDirection = direction;
+        }
+        else
+        {
+            relativeDirection = -direction;
+        }
+        myPlayer.verticalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.z) / 8f) * -Mathf.Sign(relativeDirection.z);
+        myPlayer.horizontalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.x) / 8f) * -Mathf.Sign(relativeDirection.x);
+    }
+
+    void DefendOpponent()
+    {
+        if (myPlayer.ball.owner == opponentImDefending)
+        {
+            Vector3 directionToMyGoal = (myPlayer.myGoalsPosition - myPlayer.ball.owner.transform.position).normalized;
+            directionToMyGoal.y = 0;
+            directionToMyGoal.Normalize();
+            if (myPlayer.teamIndex == 0)
             {
-                if (!myPlayer.isKicking && !isLiningUpShot)
-                {
-                    Vector3 potentialShotPlacement = CheckForShotPath();
-                    if (potentialShotPlacement != Vector3.zero)
-                    {
-                        currentShotPlacement = potentialShotPlacement;
-                        isLiningUpShot = true;
-                        Debug.Log("Shooting!");
-                        StartCoroutine(LineUpShotRoutine(1f));
-                        return currentShotPlacement;
-                    }
-                }
-                if (currentShotPlacement != Vector3.zero)
-                {
-                    return currentShotPlacement;
-                }
+                desiredPosition = myPlayer.ball.owner.transform.position + directionToMyGoal * 4f;
             }
-            return myPlayer.opponentsGoalsPosition;
-        }
-        else if (aiState == AIState.Defending)
-        {
-            CheckForOpponentToDefend();
-            if (opponentImDefending != null)
+            else
             {
-                if (myPlayer.ball.owner == opponentImDefending)
-                {
-                    // point between my opponent and our goal
-                    Vector3 nearestPoint = FindNearestPointOnLine(opponentImDefending.transform.position, myPlayer.myGoalsPosition, transform.position);
-                    if ((transform.position - nearestPoint).sqrMagnitude < 10f)
-                    {
-                        // if we are between the oppponent and our goal, move towards the opponent
-                        return myPlayer.ball.transform.position;
-                    }
-                    else
-                    {
-                        return nearestPoint;
-                    }
-
-                }
-                else
-                {
-                    // move to center point of triangle created by ball, goal, and opponent
-                    return FindCentroid(myPlayer.ball.transform.position, myPlayer.myGoalsPosition, opponentImDefending.transform.position);
-                }
+                desiredPosition = myPlayer.ball.owner.transform.position + directionToMyGoal * 4f;
             }
-            return FindNearestPointOnLine(myPlayer.ball.transform.position, myPlayer.myGoalsPosition, transform.position);
-        }
-        else if (aiState == AIState.Shooting)
-        {
-            return myPlayer.opponentsGoalsPosition;
-        }
-        else if (aiState == AIState.Idling)
-        {
-
-            if (Player.teamWithBall == -1)
+            if ((transform.position - desiredPosition).sqrMagnitude < 6)
             {
-                return myPlayer.ball.transform.position;
+                myPlayer.IsSprinting = false;
             }
-            return transform.position;
+            else
+            {
+                myPlayer.IsSprinting = true;
+            }
+            Vector3 direction = CalculateInterceptCourse(desiredPosition, myPlayer.ball.owner.currentVelocity, transform.position, myPlayer.sprintingMaxSpeed);
+            if (direction == Vector3.zero)
+            {
+                Debug.DrawRay(transform.position, myPlayer.ball.owner.transform.position - transform.position, Color.black);
+            }
+            else
+            {
+                Debug.DrawRay(transform.position, direction, Color.red);
+            }
+            if (direction == Vector3.zero)
+            {
+                direction = myPlayer.ball.owner.transform.position - transform.position;
+            }
+
+            Vector3 relativeDirection;
+            if (myPlayer.teamIndex == 1)
+            {
+                relativeDirection = direction;
+            }
+            else
+            {
+                relativeDirection = -direction;
+            }
+            myPlayer.verticalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.z) / 8f) * -Mathf.Sign(relativeDirection.z);
+            myPlayer.horizontalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.x) / 8f) * -Mathf.Sign(relativeDirection.x);
         }
-        else if (aiState == AIState.Attacking)
+        else
         {
-            return new Vector3(transform.position.x, 0f, myPlayer.opponentsGoalsPosition.z);
+
+            //// center point of triangle created by ball, goal, and opponent
+            //desiredPosition =  FindCentroid(myPlayer.ball.transform.position, myPlayer.myGoalsPosition, opponentImDefending.transform.position);
+            // center point of triangle created by ball, goal, and opponent
+            desiredPosition = GetOffballDefensivePosition();
+            Vector3 direction = desiredPosition - transform.position;
+            Vector3 relativeDirection;
+            if (myPlayer.teamIndex == 1)
+            {
+                relativeDirection = direction;
+            }
+            else
+            {
+                relativeDirection = -direction;
+            }
+            myPlayer.verticalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.z) / 8f) * -Mathf.Sign(relativeDirection.z);
+            myPlayer.horizontalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.x) / 8f) * -Mathf.Sign(relativeDirection.x);
         }
+    }
 
-        return transform.position;
+    Vector3 GetOffballDefensivePosition()
+    {
+        Vector3 direction = myPlayer.ball.transform.position - opponentImDefending.transform.position;
+        Vector3 goalPosition = opponentImDefending.transform.position + (direction * .5f);
+        return goalPosition;
+    }
 
+    // move to a position where the player with ball can pass to me
+    private void GetOpen()
+    {
+        
+        if (formationSpot == null)
+        {
+            formationSpot = teamBrain.GetAssignedFormationSpot(myPlayer);
+            
+        }
+        Vector3 whereToMove = formationSpot.position; //  PitchGrid.instance.FindOptimalSpaceForPlayer(myPlayer);
+        Vector3 relativeDirection;
+        if (myPlayer.teamIndex == 1)
+        {
+            relativeDirection = whereToMove - transform.position;
+        }
+        else
+        {
+            relativeDirection = -(whereToMove - transform.position);
+        }
+        myPlayer.verticalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.z) / 8f) * -Mathf.Sign(relativeDirection.z);
+        myPlayer.horizontalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.x) / 8f) * -Mathf.Sign(relativeDirection.x);
     }
 
     public Vector3 FindNearestPointOnLine(Vector3 origin, Vector3 end, Vector3 point)
@@ -291,23 +511,23 @@ public class AiController : MonoBehaviour
                     nearestOpponentIndex = opponentIndex;
                 }
             }
+            opponentImDefending = myPlayer.opponents[nearestOpponentIndex];
+            //if (nearestOpponentSquareDistance <= detectionRadius * detectionRadius)
+            //{
+            //    if ((transform.position - myPlayer.ball.transform.position).sqrMagnitude < nearestOpponentSquareDistance)
+            //    {
+            //        opponentImDefending = null;
+            //    }
+            //    else
+            //    {
+            //        opponentImDefending = myPlayer.opponents[nearestOpponentIndex];
+            //    }
 
-            if (nearestOpponentSquareDistance <= detectionRadius * detectionRadius)
-            {
-                if ((transform.position - myPlayer.ball.transform.position).sqrMagnitude < nearestOpponentSquareDistance)
-                {
-                    opponentImDefending = null;
-                }
-                else
-                {
-                    opponentImDefending = myPlayer.opponents[nearestOpponentIndex];
-                }
-
-            }
-            else
-            {
-                opponentImDefending = null;
-            }
+            //}
+            //else
+            //{
+            //    opponentImDefending = null;
+            //}
         }
     }
 
@@ -322,7 +542,11 @@ public class AiController : MonoBehaviour
         {
             if (!Physics.SphereCast(transform.position, shotClearanceNeeded, (shotPlacements[shotPlacementIndex] - transform.position).normalized, out hit, (shotPlacements[i] - transform.position).magnitude, myPlayer.playerLayerMask))
             {
-                return shotPlacements[shotPlacementIndex];
+                if (!Physics.Raycast(transform.position, (shotPlacements[shotPlacementIndex] - transform.position).normalized, (shotPlacements[i] - transform.position).magnitude, goalLayerMask))
+                {
+                    return shotPlacements[shotPlacementIndex];
+                }
+                
             }
             shotPlacementIndex += 1;
             shotPlacementIndex = shotPlacementIndex % shotPlacements.Count;
@@ -339,6 +563,16 @@ public class AiController : MonoBehaviour
         myPlayer.StartKick();
         StartCoroutine(ShotPowerRoutine(CalculateShotPower()));
         isLiningUpShot = false;
+    }
+
+    // Gives the player time to rotate towards where they want to pass it
+    private IEnumerator LineUpPassRoutine(float delay)
+    {
+
+        yield return new WaitForSeconds(delay);
+        myPlayer.StartKick();
+        StartCoroutine(PassPowerRoutine(CalculatePassPower()));
+        isLiningUpPass = false;
     }
 
     public Vector3 FindCentroid(Vector3 p1, Vector3 p2, Vector3 p3)
@@ -370,7 +604,80 @@ public class AiController : MonoBehaviour
     private IEnumerator ShotPowerRoutine(float delay)
     {
         yield return new WaitForSeconds(delay);
+        myPlayer.StopPoweringUpKick();
+        
+    }
+
+
+    // determines how long to hold the shoot button down
+    private float CalculatePassPower()
+    {
+        float squareDistance = (desiredPosition - transform.position).sqrMagnitude;
+        if (squareDistance < 250f)
+        {
+            return .15f;
+        }
+        else if (squareDistance < 810f)
+        {
+            return .25f;
+        }
+        else
+        {
+            return .35f;
+        }
+    }
+
+    // simulates holding down the kick button
+    private IEnumerator PassPowerRoutine(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        myPlayer.StopPoweringUpKick();
         myPlayer.EndKick();
+        
+    }
+
+
+
+    // Method from Unity user Bunny83 at https://answers.unity.com/questions/296949/how-to-calculate-a-position-to-fire-at.html
+    public static Vector3 CalculateInterceptCourse(Vector3 aTargetPos, Vector3 aTargetSpeed, Vector3 aInterceptorPos, float aInterceptorSpeed)
+    {
+        Vector3 targetDir = aTargetPos - aInterceptorPos;
+        float iSpeed2 = aInterceptorSpeed * aInterceptorSpeed;
+        float tSpeed2 = aTargetSpeed.sqrMagnitude;
+        float fDot1 = Vector3.Dot(targetDir, aTargetSpeed);
+        float targetDist2 = targetDir.sqrMagnitude;
+        float d = (fDot1 * fDot1) - targetDist2 * (tSpeed2 - iSpeed2);
+        if (d < 0.1f)  // negative == no possible course because the interceptor isn't fast enough
+            return aTargetPos;
+        float sqrt = Mathf.Sqrt(d);
+        float S1 = (-fDot1 - sqrt) / targetDist2;
+        float S2 = (-fDot1 + sqrt) / targetDist2;
+        if (S1 < 0.0001f)
+        {
+            if (S2 < 0.0001f)
+                return aTargetPos;
+            else
+                return (S2) * targetDir + aTargetSpeed;
+        }
+        else if (S2 < 0.0001f)
+            return (S1) * targetDir + aTargetSpeed;
+        else if (S1 < S2)
+            return (S2) * targetDir + aTargetSpeed;
+        else
+            return (S1) * targetDir + aTargetSpeed;
+    }
+
+    // when AiController is disabled, let the team brain know we aren't defending the ball
+    public void NotifyBrainOfDetachment()
+    {
+        if (myPlayer && teamBrain)
+        {
+            teamBrain.StoppedDefendingOpponent(opponentImDefending);
+            //if (opponentImDefending == myPlayer.ball.owner)
+            //{
+            //    teamBrain.PlayerStoppedDefendingBall(myPlayer);
+            //}
+        }
     }
 
 }

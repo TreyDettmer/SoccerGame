@@ -3,24 +3,28 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using DG.Tweening;
+using UnityEngine.SceneManagement;
 
 public class GameplayManager : MonoBehaviour
 {
     [HideInInspector]
     public static GameplayManager instance;
-    private int team0Score = 0;
-    private int team1Score = 0;
+    [HideInInspector] public int team0Score = 0;
+    [HideInInspector] public int team1Score = 0;
     private List<PlayerInput> playerInputs = new List<PlayerInput>();
     private List<Player> players = new List<Player>();
     private List<Player>[] teams = { new List<Player>(), new List<Player>() };
-    private List<HumanController> restartRequesters = new List<HumanController>();
     [SerializeField]
     private GameObject aiPlayerObjectPrefab;
     public int numberOfAi = 1;
+    private GameClock gameClock;
+    public float gameLengthInMinutes = 1f;
     public Transform team0SpawnPointParent;
     public Transform team1SpawnPointParent;
     private List<Transform> team0SpawnPoints = new List<Transform>();
     private List<Transform> team1SpawnPoints = new List<Transform>();
+    [SerializeField] TeamBrain team0Brain;
+    [SerializeField] TeamBrain team1Brain;
 
     [SerializeField]
     Transform ballSpawnPoint;
@@ -39,6 +43,8 @@ public class GameplayManager : MonoBehaviour
     LayerMask team1CullingMask;
 
     private AudioSource audioSource;
+    [SerializeField] private AudioClip crowdAudioClip;
+    [SerializeField] private AudioClip whistleAudioClip;
     private Goal[] goals;
     private Ball ball;
     int numberOfAiOnTeam0 = 1;
@@ -111,6 +117,8 @@ public class GameplayManager : MonoBehaviour
         goals = FindObjectsOfType<Goal>();
         ball = FindObjectOfType<Ball>();
         audioSource = GetComponent<AudioSource>();
+        gameClock = GetComponent<GameClock>();
+        gameClock.realTimeGameLengthInMinutes = gameLengthInMinutes;
         
 
         for (int i = 0; i < team0SpawnPointParent.childCount; i++)
@@ -173,11 +181,21 @@ public class GameplayManager : MonoBehaviour
         player.ResetValues();
         if (player.teamIndex == 0)
         {
+            player.GetComponent<AiController>().teamBrain = team0Brain;
+            if (!team0Brain.players.Contains(player))
+            {
+                team0Brain.players.Add(player);
+            }
             player.UpdateMaterial();
             MinimapController.instance.CreatePlayerCanvasPrefab(player, new Color(0f, 0f, 1f));
         }
         else
         {
+            player.GetComponent<AiController>().teamBrain = team1Brain;
+            if (!team1Brain.players.Contains(player))
+            {
+                team1Brain.players.Add(player);
+            }
             player.UpdateMaterial();
             MinimapController.instance.CreatePlayerCanvasPrefab(player, new Color(1f, 0f, 0f));
         }
@@ -191,6 +209,11 @@ public class GameplayManager : MonoBehaviour
             player.teamIndex = 0;
             teams[0].Add(player);
             players.Add(player);
+            player.GetComponent<AiController>().teamBrain = team0Brain;
+            if (!team0Brain.players.Contains(player))
+            {
+                team0Brain.players.Add(player);
+            }
             player.UpdateGameState(Player.GameState.Gameplay);
 
         }
@@ -200,6 +223,11 @@ public class GameplayManager : MonoBehaviour
             player.teamIndex = 1;
             teams[1].Add(player);
             players.Add(player);
+            player.GetComponent<AiController>().teamBrain = team1Brain;
+            if (!team1Brain.players.Contains(player))
+            {
+                team1Brain.players.Add(player);
+            }
             player.UpdateGameState(Player.GameState.Gameplay);
         }
     }
@@ -239,7 +267,7 @@ public class GameplayManager : MonoBehaviour
 
     public void GoalScored(int teamGoalScoredOn)
     {
-        audioSource.Play();
+        audioSource.PlayOneShot(crowdAudioClip);
         if (teamGoalScoredOn == 0)
         {
             team1Score += 1;
@@ -262,7 +290,7 @@ public class GameplayManager : MonoBehaviour
 
     IEnumerator PostGoalRoutine(float duration)
     {
-        Time.timeScale = .2f;
+        Time.timeScale = .15f;
         yield return new WaitForSecondsRealtime(duration);
         Time.timeScale = 1f;
         ResetPlayers();
@@ -283,6 +311,7 @@ public class GameplayManager : MonoBehaviour
             teams[0][i].transform.position = team0SpawnPoints[i].position;
             teams[0][i].transform.rotation = team0SpawnPoints[i].rotation;
             teams[0][i].GetComponent<Rigidbody>().velocity = Vector3.zero;
+            teams[0][i].GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
             teams[0][i].ResetValues();
         }
         for (int i = 0; i < teams[1].Count; i++)
@@ -290,6 +319,7 @@ public class GameplayManager : MonoBehaviour
             teams[1][i].transform.position = team1SpawnPoints[i].position;
             teams[1][i].transform.rotation = team1SpawnPoints[i].rotation;
             teams[1][i].GetComponent<Rigidbody>().velocity = Vector3.zero;
+            teams[1][i].GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
             teams[1][i].ResetValues();
         }
     }
@@ -327,37 +357,21 @@ public class GameplayManager : MonoBehaviour
         fouler.UpdatePlayerState(Player.PlayerState.Penalized);
     }
 
-    public void RequestedRestart(HumanController humanController, bool canceledRequest = false)
-    {
-        if (canceledRequest)
-        {
-            if (restartRequesters.Contains(humanController))
-            {
-                restartRequesters.Remove(humanController);
-            }
-            
-        }
-        else
-        {
-            if (!restartRequesters.Contains(humanController))
-            {
-                restartRequesters.Add(humanController);
-            }
-            
-        }
-        if (restartRequesters.Count >= playerInputs.Count)
-        {
-            restartRequesters.Clear();
-            RestartGame();
-        }
-    }
+
     public void RestartGame()
     {
 
+        HumanController[] humanControllers = FindObjectsOfType<HumanController>();
+        for (int i = 0; i < humanControllers.Length; i++)
+        {
+            humanControllers[i].ToggleUIActionMap(false);
+        }
         ResetPlayers();
         ResetBall();
         team0Score = 0;
         team1Score = 0;
+        GameplayGui.instance.ToggleScoreLabel(false);
+        gameClock.ResetClock();
         GameplayGui.instance.UpdateScore(team0Score, team1Score);
         StartCoroutine(GameCountdown());
     }
@@ -367,12 +381,13 @@ public class GameplayManager : MonoBehaviour
         for (int i = 0; i < players.Count; i++)
         {
             players[i].UpdatePlayerState(Player.PlayerState.Waiting);
+            players[i].UpdateGameState(Player.GameState.SelectSides);
         }
         if (_countdownTime == -1f)
         {
             GameplayGui.instance.ToggleScoreLabel(false);
         }
-        
+        Time.timeScale = 1f;
         float currentCountdownTime = _countdownTime == -1f ? countdownTime : _countdownTime;
         while (currentCountdownTime > 0f)
         {
@@ -381,9 +396,12 @@ public class GameplayManager : MonoBehaviour
             currentCountdownTime -= 1f;
         }
         GameplayGui.instance.UpdateCountdown("Go");
+        gameClock.ResumeClock();
+        audioSource.PlayOneShot(whistleAudioClip);
         for (int i = 0; i < players.Count; i++)
         {
             players[i].UpdatePlayerState(Player.PlayerState.Playing);
+            players[i].UpdateGameState(Player.GameState.Gameplay);
         }
         yield return new WaitForSeconds(1f);
         GameplayGui.instance.UpdateCountdown("");
@@ -450,6 +468,96 @@ public class GameplayManager : MonoBehaviour
         else
         {
             return goals[0].transform.position;
+        }
+    }
+
+    public void QuitGame()
+    {
+
+        SceneManager.LoadScene(0);
+    }
+    public void PauseForPeriodEnd()
+    {
+        // Disable players
+        for (int i = 0; i < players.Count; i++)
+        {
+            players[i].UpdateGameState(Player.GameState.SelectSides);
+            players[i].UpdatePlayerState(Player.PlayerState.Waiting);
+        }
+
+        gameClock.isPaused = true;
+        GameplayGui.instance.EnablePauseMenu(true);
+        Time.timeScale = 0f;
+        // switch to ui action map
+        HumanController[] humanControllers = FindObjectsOfType<HumanController>();
+        for (int i = 0; i < humanControllers.Length; i++)
+        {
+            humanControllers[i].ToggleUIActionMap(true);
+        }
+    }
+
+    public void PauseGame()
+    {
+        // Disable players
+        for (int i = 0; i < players.Count; i++)
+        {
+            players[i].UpdateGameState(Player.GameState.SelectSides);
+            players[i].UpdatePlayerState(Player.PlayerState.Waiting);
+        }
+
+        gameClock.isPaused = true;
+        GameplayGui.instance.EnablePauseMenu(true);
+        Time.timeScale = 0f;
+        // switch to ui action map
+        HumanController[] humanControllers = FindObjectsOfType<HumanController>();
+        for (int i = 0; i < humanControllers.Length; i++)
+        {
+            humanControllers[i].ToggleUIActionMap(true);
+        }
+
+    }
+
+    public void ResumeGameFromPeriodEnd()
+    {
+        ResetPlayers();
+        ResetBall();
+        StartCoroutine(GameCountdown(2f));
+    }
+
+    public void ResumeGame()
+    {
+        // switch to ui action map
+        HumanController[] humanControllers = FindObjectsOfType<HumanController>();
+        for (int i = 0; i < humanControllers.Length; i++)
+        {
+            humanControllers[i].ToggleUIActionMap(false);
+        }
+
+        // determine how we should resume the game based on whether a period just ended
+        if (GameClock.instance.elapsedMinutes == 45f && GameClock.instance.elapsedSeconds == 0f)
+        {
+            ResumeGameFromPeriodEnd();
+        }
+        else if (GameClock.instance.elapsedMinutes == 90f && GameClock.instance.elapsedSeconds == 0f)
+        {
+            ResumeGameFromPeriodEnd();
+        }
+        else if (GameClock.instance.elapsedMinutes == 105f && GameClock.instance.elapsedSeconds == 0f)
+        {
+            ResumeGameFromPeriodEnd();
+        }
+        else
+        {
+            Time.timeScale = 1f;
+            gameClock.ResumeClock();         
+            for (int i = 0; i < players.Count; i++)
+            {
+                players[i].UpdatePlayerState(Player.PlayerState.Playing);
+                players[i].UpdateGameState(Player.GameState.Gameplay);
+            }
+            
+            
+            
         }
     }
 }

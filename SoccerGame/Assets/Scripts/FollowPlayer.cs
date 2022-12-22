@@ -29,8 +29,7 @@ public class FollowPlayer : MonoBehaviour
     public bool rotateAroundPlayer = true;
     public float transitionSpeed = 10f;
 
-    public GameObject ballDirectionImageLeft;
-    public GameObject ballDirectionImageRight;
+    public RectTransform ballDirectionIndicator;
     private bool isBallDirectionImageEnabled = false;
 
     private Camera cam;
@@ -98,10 +97,10 @@ public class FollowPlayer : MonoBehaviour
     {
 
         if (!ballTransform || !player) return;
-        if (player.gameState != Player.GameState.Gameplay)
-        {
-            return;
-        }
+        //if (player.gameState != Player.GameState.Gameplay)
+        //{
+        //    return;
+        //}
 
         Vector3 newPos = player.transform.position + cameraOffset;
         if (isTransitioningToNewPlayer)
@@ -111,51 +110,42 @@ public class FollowPlayer : MonoBehaviour
             {
                 isTransitioningToNewPlayer = false;
             }
-            return;
         }
-        float ballDiff = Mathf.Abs(ballTransform.position.z - transform.position.z);
-        float playerDiff = Mathf.Abs(player.transform.position.z - transform.position.z);
-        //if (ballDiff < playerDiff && !player.HasBall)
-        //{
-            
-        //    float zOffset = Mathf.Clamp(ballTransform.position.z - Mathf.Sign(transform.forward.z) * 10f, -500f, 500f);
-        //    newPos = new Vector3(newPos.x, newPos.y, zOffset);
-        //}
+
         Vector3 ballViewportPosition = cam.WorldToViewportPoint(ballTransform.position);
-        if (ballViewportPosition.x < 0f || ballViewportPosition.x > 1f)
+        
+        if (ballViewportPosition.x < 0f || ballViewportPosition.x > 1f || ballViewportPosition.y < 0f)
         {
             if (!isBallDirectionImageEnabled)
             {
-                if (ballViewportPosition.x > 1f)
-                {
-                    ballDirectionImageRight.SetActive(true);
-                    ballDirectionImageLeft.SetActive(false);
-                }
-                else
-                {
-                    ballDirectionImageLeft.SetActive(true);
-                    ballDirectionImageRight.SetActive(false);
-                }
-
+                ballDirectionIndicator.gameObject.SetActive(true);
                 isBallDirectionImageEnabled = true;
             }
+            Vector3 directionToBall = player.transform.position - ballTransform.position;
+            Quaternion rotationToBall = Quaternion.LookRotation(directionToBall);
+            rotationToBall.z = -rotationToBall.y;
+            rotationToBall.x = 0f;
+            rotationToBall.y = 0f;
+            Vector3 northDirection = new Vector3(0, 0, transform.eulerAngles.y);
+            ballDirectionIndicator.localRotation = rotationToBall * Quaternion.Euler(northDirection);
         }
         else
         {
             if (isBallDirectionImageEnabled)
             {
-                ballDirectionImageLeft.SetActive(false);
-                ballDirectionImageRight.SetActive(false);
+                ballDirectionIndicator.gameObject.SetActive(false);
                 isBallDirectionImageEnabled = false;
             }
         }
 
-        transform.position = Vector3.Slerp(transform.position, newPos, smoothFactor);
-        if (lookAtPlayer || rotateAroundPlayer)
+        if (!isTransitioningToNewPlayer)
         {
-            transform.LookAt(player.transform);
+            transform.position = Vector3.Slerp(transform.position, newPos, smoothFactor);
+            if (lookAtPlayer || rotateAroundPlayer)
+            {
+                transform.LookAt(player.transform);
+            }
         }
-
 
     }
 
