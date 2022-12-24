@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class InputManager : MonoBehaviour
 {
@@ -27,14 +28,28 @@ public class InputManager : MonoBehaviour
         }
     }
 
+
     private void OnEnable()
     {
-        playerInputManager.onPlayerJoined += SpawnPlayer;
+        if (playerInputManager)
+        {
+            playerInputManager.onPlayerJoined += SpawnPlayer;
+            playerInputManager.onPlayerLeft += OnPlayerLeft;
+        }
     }
 
     private void OnDisable()
     {
-        playerInputManager.onPlayerJoined -= SpawnPlayer;
+        if (playerInputManager)
+        {
+            playerInputManager.onPlayerJoined -= SpawnPlayer;
+            playerInputManager.onPlayerLeft += OnPlayerLeft;
+        }
+    }
+
+    public void OnPlayerLeft(PlayerInput playerInput)
+    {
+        SelectSidesGui.instance.PlayerLeft(playerInput);
     }
 
     public void SpawnPlayer(PlayerInput playerInput)

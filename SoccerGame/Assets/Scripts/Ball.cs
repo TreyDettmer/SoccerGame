@@ -27,10 +27,11 @@ public class Ball : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (transform.position.y < -1f)
+        if (transform.position.y < -1f || Mathf.Abs(transform.position.x) > 36f || Mathf.Abs(transform.position.z) > 60f)
         {
             if (lastKickedBy != null)
             {
+                Debug.Log("Last Kicked by " + lastKickedBy);
                 if (lastKickedBy.teamIndex == 0)
                 {
                     GameplayManager.instance.HandleOutOfBounds(1);

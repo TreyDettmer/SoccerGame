@@ -690,7 +690,7 @@ Camera:
     y: 0
     width: 1
     height: 1
-  near clip plane: 0.3
+  near clip plane: 1
   far clip plane: 1000
   field of view: 60
   orthographic: 0
@@ -723,6 +723,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cam: {fileID: 3554876175395487490}
+  canvas: {fileID: 4672822472187032745}
   guiSection: 1
   color: {r: 0, g: 0, b: 0, a: 0}
   cameraPlayerGui: {fileID: 0}
@@ -760,7 +761,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 4648292930393590625}
         m_TargetAssemblyTypeName: HumanController, Assembly-CSharp
-        m_MethodName: OnJump
+        m_MethodName: OnSwitchPlayers
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -821,10 +822,6 @@ MonoBehaviour:
     m_ActionId: 84aeca5a-deab-4971-a710-379264d9ce7b
     m_ActionName: Player/ChipModifier[/Mouse/middleButton]
   - m_PersistentCalls:
-      m_Calls: []
-    m_ActionId: 9d66f87d-240f-4342-b2b1-f5ba9c589816
-    m_ActionName: Player/RequestRestart[/Keyboard/r]
-  - m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 4648292930393590625}
         m_TargetAssemblyTypeName: HumanController, Assembly-CSharp
@@ -844,7 +841,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 4648292930393590625}
         m_TargetAssemblyTypeName: HumanController, Assembly-CSharp
-        m_MethodName: MoveLeft
+        m_MethodName: PauseGame
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -854,13 +851,13 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-    m_ActionId: 8fffee8d-5651-48a4-814f-3e0e4d64a909
-    m_ActionName: SelectSides/MoveLeft[/Keyboard/a]
+    m_ActionId: 4a0efcaf-6529-4a8f-9dbf-a6c10a229693
+    m_ActionName: Player/Pause
   - m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 4648292930393590625}
         m_TargetAssemblyTypeName: HumanController, Assembly-CSharp
-        m_MethodName: MoveRight
+        m_MethodName: SelectSidesMovementInput
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -870,8 +867,8 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-    m_ActionId: 4e25c815-0059-4656-99d1-e946f46b200a
-    m_ActionName: SelectSides/MoveRight[/Keyboard/d]
+    m_ActionId: 7aab135e-84c4-4387-9d24-adc712bca158
+    m_ActionName: UI/Navigate[/XInputControllerWindows/leftStick/up,/XInputControllerWindows/rightStick/up,/XInputControllerWindows/leftStick/down,/XInputControllerWindows/rightStick/down,/XInputControllerWindows/leftStick/left,/XInputControllerWindows/rightStick/left,/XInputControllerWindows/leftStick/right,/XInputControllerWindows/rightStick/right,/XInputControllerWindows/dpad,/Keyboard/w,/Keyboard/upArrow,/Keyboard/s,/Keyboard/downArrow,/Keyboard/a,/Keyboard/leftArrow,/Keyboard/d,/Keyboard/rightArrow]
   - m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 4648292930393590625}
@@ -886,62 +883,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-    m_ActionId: e5898ae9-cfc0-43e5-a2e6-11d2764bb137
-    m_ActionName: SelectSides/ReadyUp[/Keyboard/space]
-  - m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 4648292930393590625}
-        m_TargetAssemblyTypeName: HumanController, Assembly-CSharp
-        m_MethodName: MoveDown
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-    m_ActionId: 3f648e07-aea2-4292-8c4f-fe228cd3e9bf
-    m_ActionName: SelectSides/MoveDown[/Keyboard/s]
-  - m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 4648292930393590625}
-        m_TargetAssemblyTypeName: HumanController, Assembly-CSharp
-        m_MethodName: MoveUp
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-    m_ActionId: 1429a61b-40d9-42ce-849d-55ddc3be4197
-    m_ActionName: SelectSides/MoveUp[/Keyboard/w]
-  - m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 4648292930393590625}
-        m_TargetAssemblyTypeName: HumanController, Assembly-CSharp
-        m_MethodName: PauseGame
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-    m_ActionId: 4a0efcaf-6529-4a8f-9dbf-a6c10a229693
-    m_ActionName: Player/Pause
-  - m_PersistentCalls:
-      m_Calls: []
-    m_ActionId: 7aab135e-84c4-4387-9d24-adc712bca158
-    m_ActionName: UI/Navigate[/XInputControllerWindows/leftStick/up,/XInputControllerWindows/rightStick/up,/XInputControllerWindows/leftStick/down,/XInputControllerWindows/rightStick/down,/XInputControllerWindows/leftStick/left,/XInputControllerWindows/rightStick/left,/XInputControllerWindows/leftStick/right,/XInputControllerWindows/rightStick/right,/XInputControllerWindows/dpad,/Keyboard/w,/Keyboard/upArrow,/Keyboard/s,/Keyboard/downArrow,/Keyboard/a,/Keyboard/leftArrow,/Keyboard/d,/Keyboard/rightArrow]
-  - m_PersistentCalls:
-      m_Calls: []
     m_ActionId: f245e927-53f0-4603-8f70-271784b27b90
     m_ActionName: UI/Submit[/Keyboard/enter,/XInputControllerWindows/buttonSouth]
   - m_PersistentCalls:
@@ -978,7 +919,7 @@ MonoBehaviour:
     m_ActionName: UI/TrackedDeviceOrientation
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
-  m_DefaultActionMap: SelectSides
+  m_DefaultActionMap: UI
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 3554876175395487490}
 --- !u!114 &4387831106728165978

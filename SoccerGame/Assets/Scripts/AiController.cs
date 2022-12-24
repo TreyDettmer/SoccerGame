@@ -165,55 +165,11 @@ public class AiController : MonoBehaviour
     {
         if (aiState == AIState.Defending)
         {
-            //bool amClosestToBall = true;
-            //float sqrMagnitudeFromBall = (myPlayer.ball.transform.position - transform.position).sqrMagnitude;
-            //// Check if i am the closest to the opponent with the ball
-            //for (int i = 0; i < myPlayer.teammates.Count; i++)
-            //{
-            //    float sqrMagnitude = (myPlayer.ball.transform.position - myPlayer.teammates[i].transform.position).sqrMagnitude;
-            //    if (sqrMagnitude < sqrMagnitudeFromBall)
-            //    {
-            //        amClosestToBall = false;
-            //        break;
-            //    }
-            //}
-            teamBrain.StoppedDefendingOpponent(opponentImDefending);
-            // sort opponents by distance
+
             List<Player> opponentsSorted = new List<Player>(myPlayer.opponents);
             opponentsSorted = opponentsSorted.OrderBy(opponent => (transform.position - opponent.transform.position).sqrMagnitude).ToList();
-            Player chosenOpponent = opponentsSorted.Count > 0 ? opponentsSorted[0] : null;
-            for (int i = 0; i < opponentsSorted.Count; i++)
-            {
-                if (!teamBrain.IsOpponentBeingDefended(opponentsSorted[i]))
-                {
-                    chosenOpponent = opponentsSorted[i];
-                    break;
-                }
-            }
-            if (teamBrain.StartedDefendingOpponent(chosenOpponent))
-            {
-                opponentImDefending = chosenOpponent;
-            }
-            else
-            {
-                opponentImDefending = null;
-            }
-            // //Determine if we should be defending the opponent with the ball
-            //if (amClosestToBall)
-            //{
-            //    teamBrain.PlayerStartedDefendingBall(myPlayer);
-            //    opponentImDefending = myPlayer.ball.owner;
-            //}
-            //else
-            //{
-            //    //defend an opponent who does not have the ball
-            //    if (opponentImDefending == myPlayer.ball.owner)
-            //    {
-            //        teamBrain.PlayerStoppedDefendingBall(myPlayer);
-            //    }
-            //    opponentImDefending = FindClosestOpponent();
-            //}
-            //CheckForOpponentToDefend();
+            opponentImDefending = opponentsSorted.Count > 0 ? opponentsSorted[0] : null;
+
             if (opponentImDefending != null)
             {
                 DefendOpponent();
@@ -382,9 +338,22 @@ public class AiController : MonoBehaviour
             Vector3 directionToMyGoal = (myPlayer.myGoalsPosition - myPlayer.ball.owner.transform.position).normalized;
             directionToMyGoal.y = 0;
             directionToMyGoal.Normalize();
-            if (myPlayer.teamIndex == 0)
+
+
+            // check if the opponent is already being defended
+            bool isAlreadyDefended = false;
+            for (int i = 0; i < myPlayer.teammates.Count; i++)
             {
-                desiredPosition = myPlayer.ball.owner.transform.position + directionToMyGoal * 4f;
+                // check if teammate is in a defensive position against this opponent
+                if ((myPlayer.teammates[i].transform.position - (myPlayer.ball.owner.transform.position + directionToMyGoal * 4f)).sqrMagnitude < 6f)
+                {
+                    isAlreadyDefended = true;
+                    break;
+                }
+            }
+            if (isAlreadyDefended)
+            {
+                desiredPosition = myPlayer.ball.transform.position;
             }
             else
             {
@@ -421,8 +390,49 @@ public class AiController : MonoBehaviour
             {
                 relativeDirection = -direction;
             }
-            myPlayer.verticalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.z) / 8f) * -Mathf.Sign(relativeDirection.z);
-            myPlayer.horizontalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.x) / 8f) * -Mathf.Sign(relativeDirection.x);
+
+            // calculate input based on distance
+
+            float distanceToDesiredPosition = relativeDirection.magnitude;
+            float dotToDesiredPosition = Vector3.Dot(transform.forward, relativeDirection.normalized);
+            Vector3 velocityInDirection = Vector3.Project(myPlayer.currentVelocity, relativeDirection.normalized);
+            float speedInDirection = Vector3.Dot(myPlayer.currentVelocity, relativeDirection.normalized);
+
+            float stoppingDistance = 3f;
+            float relativeZDistance = relativeDirection.z;
+            float relativeXDistance = relativeDirection.x;
+            //if (distanceToDesiredPosition < stoppingDistance)
+            //{
+            //    myPlayer.verticalInput = Mathf.Clamp01(Mathf.Abs(distanceToDesiredPosition / stoppingDistance)) * -Mathf.Sign(relativeDirection.z);
+            //    myPlayer.horizontalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.x) / 8f) * -Mathf.Sign(relativeDirection.x);
+            //}
+            if (speedInDirection <= -myPlayer.maxSpeed + 3f)
+            {
+                myPlayer.verticalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.z)) * -Mathf.Sign(relativeDirection.z);
+                myPlayer.horizontalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.x)) * -Mathf.Sign(relativeDirection.x);
+            }
+            else
+            {
+                if (relativeZDistance < stoppingDistance)
+                {
+                    myPlayer.verticalInput = Mathf.Clamp01(Mathf.Abs(relativeZDistance / stoppingDistance)) * -Mathf.Sign(relativeDirection.z);
+                }
+                else
+                {
+                    myPlayer.verticalInput = 1f * -Mathf.Sign(relativeDirection.z);
+                }
+                if (relativeXDistance < stoppingDistance)
+                {
+                    myPlayer.horizontalInput = Mathf.Clamp01(Mathf.Abs(relativeXDistance / stoppingDistance)) * -Mathf.Sign(relativeDirection.x);
+
+                }
+                else
+                {
+                    myPlayer.horizontalInput = 1f * -Mathf.Sign(relativeDirection.x);
+
+                }
+            }
+
         }
         else
         {

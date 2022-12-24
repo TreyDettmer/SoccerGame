@@ -34,6 +34,7 @@ public class Player : MonoBehaviour
 
     [Header("Movement")]
     public float maxSpeed;
+    public float sprintingMaxSpeed = 4f;
     public float acceleration;
     public float maxAccelForce;
     public float speedFactor = 1f;
@@ -112,9 +113,9 @@ public class Player : MonoBehaviour
     [HideInInspector] public bool CanSlide { get; set; } = true;
     [SerializeField]
     private float ballDribbleDirectionFactor = .3f;
-    public float sprintingMaxSpeed = 4f;
 
-    [HideInInspector] public bool IsSprinting { get; set; } = false;
+
+    public bool IsSprinting { get; set; } = false;
     [HideInInspector] public bool CanDribble { get; set; } = true;
     [HideInInspector] public bool IsGrounded { get; set; } = false;
     [HideInInspector] public bool IsJumping { get; set; } = false;
@@ -154,8 +155,10 @@ public class Player : MonoBehaviour
     [SerializeField] Collider[] mainColliders;
     Collider[] ragdollColliders;
     Rigidbody[] limbsRigidbodies;
+    public bool canRagdoll = false;
     bool isRagdolled = false;
     [SerializeField] float ragdollSlideForceMultiplier = 3f;
+    [SerializeField] ParticleSystem slideDirt;
     #endregion
 
     public PlayerState playerState;
@@ -167,6 +170,9 @@ public class Player : MonoBehaviour
 
 
     public AudioSource audioSource;
+    [SerializeField] AudioClip kickClip;
+    [SerializeField] AudioClip[] collisionGrunts;
+    [SerializeField] AudioClip fouledGrunt;
 
     [HideInInspector]
     public Vector3 myGoalsPosition = Vector3.zero;
@@ -196,6 +202,7 @@ public class Player : MonoBehaviour
         Goalie[] goalieObjects = FindObjectsOfType<Goalie>();
         ragdollColliders = rig.GetComponentsInChildren<Collider>();
         limbsRigidbodies = rig.GetComponentsInChildren<Rigidbody>();
+        slideDirt.Stop();
         ToggleRagdoll(false);
         for (int i = 0; i < goalieObjects.Length; i++)
         {
@@ -333,59 +340,55 @@ public class Player : MonoBehaviour
         float speed = currentVelocity.magnitude;
         previousPosition = currentPosition;
         animator.SetFloat("speed", Mathf.Clamp(speed / (sprintingMaxSpeed - 4f), 0f, 1f));
-        //if (playerState == PlayerState.Playing)
-        //{
-            if (IsSliding)
+
+        if (IsSliding)
+        {
+            if (Rb.velocity.sqrMagnitude < currentMaxSlideSpeed * currentMaxSlideSpeed)
             {
-                if (Rb.velocity.sqrMagnitude < currentMaxSlideSpeed * currentMaxSlideSpeed)
-                {
-                    if (playerState == PlayerState.Playing)
-                    {
-                        Rb.AddForce(slideDirection * currentSlideForce);
-                    }
-                }
-                return;
-            }
-            unitGoalVelocity = GetDirectionOfMovement(horizontalInput, verticalInput).normalized;
-            if ((horizontalInput != 0 || verticalInput != 0))
-            {
-                
-                goalRotation = Quaternion.LookRotation(unitGoalVelocity, Vector3.up);
-                
-                Quaternion toRotation = Quaternion.LookRotation(unitGoalVelocity, Vector3.up);
                 if (playerState == PlayerState.Playing)
                 {
-                    if (isKicking)
-                    {
-                        transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, kickingRotationSpeed * Time.deltaTime);
-                    }
-                    else
-                    {
-                        transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, rotationSpeed * Time.deltaTime);
-                    }
+                    Rb.AddForce(slideDirection * currentSlideForce);
                 }
             }
-
-
-            Vector3 unitVelocity = new Vector3(Rb.velocity.x, 0f, Rb.velocity.z);
-            float velDot = Vector3.Dot(unitGoalVelocity, unitVelocity);
-            float accel = acceleration * AccelerationFactorFromDot.Evaluate(velDot);
-            Vector3 _goalVelocity = unitGoalVelocity * currentMaxSpeed * speedFactor;
-            
-            goalVelocity = Vector3.MoveTowards(goalVelocity, _goalVelocity, accel * Time.fixedDeltaTime);
-            Vector3 neededAccel = (goalVelocity - Rb.velocity) / Time.fixedDeltaTime;
-
-            float maxAccel = maxAccelForce * MaxAccelerationFactorFromDot.Evaluate(velDot) * maxAccelForceFactor;
-
-            neededAccel = Vector3.ClampMagnitude(neededAccel, maxAccel);
+            return;
+        }
+        unitGoalVelocity = GetDirectionOfMovement(horizontalInput, verticalInput).normalized;
+        if ((horizontalInput != 0 || verticalInput != 0))
+        {
+                
+            goalRotation = Quaternion.LookRotation(unitGoalVelocity, Vector3.up);
+                
+            Quaternion toRotation = Quaternion.LookRotation(unitGoalVelocity, Vector3.up);
             if (playerState == PlayerState.Playing)
             {
-                Rb.AddForce(Vector3.Scale(neededAccel * Rb.mass, forceScale));
+                if (isKicking)
+                {
+                    transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, kickingRotationSpeed * Time.deltaTime);
+                }
+                else
+                {
+                    transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, rotationSpeed * Time.deltaTime);
+                }
             }
+        }
 
 
+        Vector3 unitVelocity = new Vector3(Rb.velocity.x, 0f, Rb.velocity.z);
+        float velDot = Vector3.Dot(unitGoalVelocity, unitVelocity);
+        float accel = acceleration * AccelerationFactorFromDot.Evaluate(velDot);
+        Vector3 _goalVelocity = unitGoalVelocity * currentMaxSpeed * speedFactor;
+            
+        goalVelocity = Vector3.MoveTowards(goalVelocity, _goalVelocity, accel * Time.fixedDeltaTime);
+        Vector3 neededAccel = (goalVelocity - Rb.velocity) / Time.fixedDeltaTime;
 
-        //}
+        float maxAccel = maxAccelForce * MaxAccelerationFactorFromDot.Evaluate(velDot) * maxAccelForceFactor;
+
+        neededAccel = Vector3.ClampMagnitude(neededAccel, maxAccel);
+        if (playerState == PlayerState.Playing)
+        {
+            Rb.AddForce(Vector3.Scale(neededAccel * Rb.mass, forceScale));
+        }
+
 
         RaycastHit hit;
         if (Physics.Raycast(groundChecker.position, -transform.up, out hit, defaultHeight, groundLayerMask))
@@ -479,7 +482,7 @@ public class Player : MonoBehaviour
             {
                 if (HasBall)
                 {
-                    audioSource.Play();
+                    audioSource.PlayOneShot(kickClip);
                     Vector3 directionToBall = (ball.transform.position - transform.position).normalized;
                     Vector3 sideCurveDirection = (transform.right * horizontalInput).normalized;
                     Vector3 topCurveDirection = (transform.forward * -verticalInput).normalized;
@@ -494,7 +497,16 @@ public class Player : MonoBehaviour
                     float sideDot = Vector3.SignedAngle(sideCurveDirection, forward, Vector3.up);
                     float topDot = Vector3.SignedAngle(topCurveDirection, right, Vector3.up);
                     Debug.Log("SideDot: " + sideDot + " TopDot: " + topDot);
-                    Vector3 torque = new Vector3(-topDot * kickSpinFactor, -sideDot * kickSpinFactor, 0f);
+                    Vector3 torque;
+                    // dot products are flipped based on the team (direction camera is facing)
+                    if (teamIndex == 1)
+                    {
+                        torque = new Vector3(-topDot * kickSpinFactor, -sideDot * kickSpinFactor, 0f);
+                    }
+                    else
+                    {
+                        torque = new Vector3(topDot * kickSpinFactor, -sideDot * kickSpinFactor, 0f);
+                    }
 
                     ball.lastKickedBy = this;
                     ball.SetOwner(null);
@@ -528,7 +540,7 @@ public class Player : MonoBehaviour
         {
             int randomSkinIndex = Random.Range(0, redTeamSkins.Length - 1);
             redTeamSkins[randomSkinIndex].SetActive(true);
-            meshRenderer = blueTeamSkins[randomSkinIndex].GetComponent<SkinnedMeshRenderer>();
+            meshRenderer = redTeamSkins[randomSkinIndex].GetComponent<SkinnedMeshRenderer>();
         }
         else
         {
@@ -540,6 +552,7 @@ public class Player : MonoBehaviour
 
     public virtual void ResetValues()
     {
+        animator.Play("Movement",-1,0f);
         HasBall = false;
         CanDribble = true;
     }
@@ -582,7 +595,10 @@ public class Player : MonoBehaviour
 
     protected IEnumerator PenaltyTimeoutRoutine()
     {
+        animator.SetBool("isPenalized", true);
         yield return new WaitForSeconds(penaltyTime);
+        meshRenderer.enabled = true;
+        animator.SetBool("isPenalized", false);
         UpdatePlayerState(PlayerState.Playing);
     }
 
@@ -611,7 +627,8 @@ public class Player : MonoBehaviour
 
     public void BallStolen()
     {
-
+        //int randomGruntIndex = Random.Range(0, collisionGrunts.Length);
+        //audioSource.PlayOneShot(collisionGrunts[randomGruntIndex]);
         ball.SetOwner(null);
         HasBall = false;
         StartCoroutine(BallPickupCooldownRoutine());
@@ -673,6 +690,11 @@ public class Player : MonoBehaviour
         }
     }
 
+    public void OnFouled()
+    {
+        audioSource.PlayOneShot(fouledGrunt);
+    }
+
     public void Slide()
     {
         if (IsSliding || !IsGrounded || playerState != PlayerState.Playing || !CanSlide || HasBall)
@@ -686,13 +708,14 @@ public class Player : MonoBehaviour
         slideDirection.y = 0;
         slideDirection = slideDirection.normalized;
         animator.SetBool("isSliding", true);
+        
         StartCoroutine(SlideRoutine());
     }
 
     public void EndSlide()
     {
         animator.SetBool("isSliding", false);
-
+        slideDirt.Stop();
         slidIntoBall = false;
         IsSliding = false;
         if (shouldBePenalized)
@@ -706,13 +729,16 @@ public class Player : MonoBehaviour
 
     protected IEnumerator SlideCooldownRoutine()
     {
+
         yield return new WaitForSeconds(slideCooldownTime);
         CanSlide = true;
     }
 
     public IEnumerator SlideRoutine()
     {
-        yield return new WaitForSeconds(slideTime);
+        yield return new WaitForSeconds(.3f);
+        slideDirt.Play();
+        yield return new WaitForSeconds(slideTime - .3f);
         EndSlide();
     }
 
@@ -774,7 +800,7 @@ public class Player : MonoBehaviour
     public void ToggleRagdoll(bool shouldRagdoll = false, Collider collider = null, Vector3 collisionForce = default(Vector3))
     {
 
-        if (shouldRagdoll)
+        if (shouldRagdoll && canRagdoll)
         {
             isRagdolled = true;
             // disable animator

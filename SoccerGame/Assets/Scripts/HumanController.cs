@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class HumanController : MonoBehaviour
 {
@@ -11,13 +12,13 @@ public class HumanController : MonoBehaviour
     #region Input
     private InputActionAsset playerInputAsset;
     private InputActionMap gameplayActionMap;
-    private InputActionMap selectSidesActionMap;
     private InputActionMap uiActionMap;
     private PlayerInput playerInput;
     #endregion
 
     #region Camera
     public Camera cam;
+    public Canvas canvas;
     private FollowPlayer cameraFollowPlayer;
     #endregion
 
@@ -42,15 +43,18 @@ public class HumanController : MonoBehaviour
         playerInput = GetComponent<PlayerInput>();
         playerInputAsset = playerInput.actions;
         gameplayActionMap = playerInputAsset.FindActionMap("Player");
-        selectSidesActionMap = playerInputAsset.FindActionMap("SelectSides");
         uiActionMap = playerInputAsset.FindActionMap("UI");
         cameraPlayerGui = GetComponent<PlayerGui>();
         cameraFollowPlayer = GetComponent<FollowPlayer>();
         gameState = Player.GameState.SelectSides;
-        uiActionMap.Disable();
         gameplayActionMap.Disable();
+        uiActionMap.Enable();
         DontDestroyOnLoad(gameObject);
+        
     }
+
+
+
 
     public void OnGameplayStart()
     {
@@ -75,15 +79,15 @@ public class HumanController : MonoBehaviour
 
     private void OnEnable()
     {
-        selectSidesActionMap.Enable();
         gameplayActionMap.Enable();
+        uiActionMap.Enable();
     }
 
 
     private void OnDisable()
     {
         gameplayActionMap.Disable();
-        selectSidesActionMap.Disable();
+        uiActionMap.Disable();
     }
 
     public void ToggleUIActionMap(bool enable)
@@ -91,13 +95,11 @@ public class HumanController : MonoBehaviour
         if (enable)
         {
             gameplayActionMap.Disable();
-            selectSidesActionMap.Disable();
             uiActionMap.Enable();
         }
         else
         {
             uiActionMap.Disable();
-            selectSidesActionMap.Enable();
             gameplayActionMap.Enable();
         }
     }
@@ -112,7 +114,16 @@ public class HumanController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
+        if (transform.position.z > 60f || transform.position.z < -60f)
+        {
+            cam.nearClipPlane = 8f;
+            canvas.planeDistance = 10f;
+        }
+        else
+        {
+            cam.nearClipPlane = 1f;
+            canvas.planeDistance = 3f;
+        }
     }
 
     private void FixedUpdate()
@@ -134,6 +145,17 @@ public class HumanController : MonoBehaviour
             myPlayer.IsSprinting = true;
             
         }
+    }
+
+    public void OnSwitchPlayers(InputAction.CallbackContext context)
+    {
+        if (!myPlayer) return;
+        if (!myPlayer.ball) return;
+        if (myPlayer.ball.owner == myPlayer)
+        {
+            return;
+        }
+        GameplayManager.instance.HumanControllerSwitchPlayers(myPlayer, this);
     }
 
     public void OnJump(InputAction.CallbackContext context)
@@ -199,65 +221,135 @@ public class HumanController : MonoBehaviour
 
     public void MoveLeft(InputAction.CallbackContext context)
     {
-        if (SelectSidesGui.instance == null)
+        if (context.performed)
         {
-            return;
+            SelectSidesGui.instance.PlayerMovedLeftOrRight(playerInput, true, guiSection);
         }
-        if (Time.time - previousMovementTime > .25f)
-        {
-           previousMovementTime = Time.time;
-           SelectSidesGui.instance.PlayerMovedLeftOrRight(playerInput, true, guiSection);
-        }
+        //if (SelectSidesGui.instance == null)
+        //{
+        //    return;
+        //}
+        //if (Time.time - previousMovementTime > .25f)
+        //{
+        //   previousMovementTime = Time.time;
+        //   SelectSidesGui.instance.PlayerMovedLeftOrRight(playerInput, true, guiSection);
+        //}
 
     }
     public void MoveRight(InputAction.CallbackContext context)
     {
-        if (SelectSidesGui.instance == null)
+        if (context.performed)
         {
-            return;
-        }
-        if (Time.time - previousMovementTime > .25f)
-        {
-            previousMovementTime = Time.time;
             SelectSidesGui.instance.PlayerMovedLeftOrRight(playerInput, false, guiSection);
         }
+        //if (SelectSidesGui.instance == null)
+        //{
+        //    return;
+        //}
+        //if (Time.time - previousMovementTime > .25f)
+        //{
+        //    previousMovementTime = Time.time;
+        //    SelectSidesGui.instance.PlayerMovedLeftOrRight(playerInput, false, guiSection);
+        //}
     }
 
     public void MoveUp(InputAction.CallbackContext context)
     {
-        if (SelectSidesGui.instance == null)
+        if (context.performed)
         {
-            return;
-        }
-        if (Time.time - previousMovementTime > .25f)
-        {
-            previousMovementTime = Time.time;
             SelectSidesGui.instance.PlayerMovedUpOrDown(playerInput, true, guiSection);
         }
+        //if (SelectSidesGui.instance == null)
+        //{
+        //    return;
+        //}
+        //if (Time.time - previousMovementTime > .25f)
+        //{
+        //    previousMovementTime = Time.time;
+        //    SelectSidesGui.instance.PlayerMovedUpOrDown(playerInput, true, guiSection);
+        //}
     }
 
     public void MoveDown(InputAction.CallbackContext context)
     {
-        if (SelectSidesGui.instance == null)
+        if (context.performed)
         {
-            return;
-        }
-        if (Time.time - previousMovementTime > .25f)
-        {
-            previousMovementTime = Time.time;
             SelectSidesGui.instance.PlayerMovedUpOrDown(playerInput, false, guiSection);
         }
+        //if (SelectSidesGui.instance == null)
+        //{
+        //    return;
+        //}
+        //if (Time.time - previousMovementTime > .25f)
+        //{
+        //    previousMovementTime = Time.time;
+        //    SelectSidesGui.instance.PlayerMovedUpOrDown(playerInput, false, guiSection);
+        //}
     }
 
     public void ReadyUp(InputAction.CallbackContext context)
     {
         if (!context.canceled)
         {
+            if (FindObjectOfType<TitleScreen>())
+            {
+                FindObjectOfType<TitleScreen>().LoadNextScene();
+                return;
+            }
             if (SelectSidesGui.instance == null)
             {
                 return;
             }
             SelectSidesGui.instance.ReadiedUp(playerInput, true);
+        }
+    }
+
+    public void SelectSidesMovementInput(InputAction.CallbackContext context)
+    {
+        if (SelectSidesGui.instance == null)
+        {
+            return;
+        }
+        Vector2 input = context.ReadValue<Vector2>();
+        // check if we are pressing down only one input
+        if (input != Vector2.zero && input.magnitude == 1f)
+        {
+            if (input.x > 0)
+            {
+                // move right
+                if (Time.time - previousMovementTime > .15f)
+                {
+                    previousMovementTime = Time.time;
+                    SelectSidesGui.instance.PlayerMovedLeftOrRight(playerInput, false, guiSection);
+                }
+            }
+            else if (input.x < 0)
+            {
+                // move left
+                if (Time.time - previousMovementTime > .15f)
+                {
+                    previousMovementTime = Time.time;
+                    SelectSidesGui.instance.PlayerMovedLeftOrRight(playerInput, true, guiSection);
+                }
+            }
+            else if (input.y > 0)
+            {
+                // move up
+                if (Time.time - previousMovementTime > .15f)
+                {
+                    previousMovementTime = Time.time;
+                    SelectSidesGui.instance.PlayerMovedUpOrDown(playerInput, true, guiSection);
+                }
+            }
+            else if (input.y < 0)
+            {
+                // move down
+                if (Time.time - previousMovementTime > .15f)
+                {
+                    previousMovementTime = Time.time;
+                    SelectSidesGui.instance.PlayerMovedUpOrDown(playerInput, false, guiSection);
+                }
+            }
         }
     }
     #endregion

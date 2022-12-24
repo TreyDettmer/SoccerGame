@@ -48,6 +48,16 @@ public class SelectSidesGui : MonoBehaviour
     {
         audioSource = GetComponent<AudioSource>();
         UpdateAiCountLabels();
+        for (int i = 0; i < 6; i++)
+        {
+            playerInputs.Add(null);
+            playerReadys.Add(true);
+        }
+        PlayerInput[] existingPlayerInputs = FindObjectsOfType<PlayerInput>();
+        for (int i = 0; i < existingPlayerInputs.Length; i++)
+        {
+            PlayerJoined(existingPlayerInputs[i]);
+        }
     }
 
     // Update is called once per frame
@@ -58,21 +68,38 @@ public class SelectSidesGui : MonoBehaviour
 
     public void PlayerJoined(PlayerInput playerInput)
     {
-        playerInputs.Add(playerInput);
-        playerReadys.Add(false);
-        playerInput.GetComponent<HumanController>().color = playerColors[playerInputs.Count - 1];
-        if (playerInputs.Count <= controllerIcons.Length)
+        int indexOfNewPlayerInput = 0;
+        while (playerInputs[indexOfNewPlayerInput] != null)
         {
-            Debug.Log("Changing color!");
-            controllerIcons[playerInputs.Count - 1].transform.GetChild(0).gameObject.SetActive(true);
-            controllerIcons[playerInputs.Count - 1].color = playerColors[playerInputs.Count - 1];
+            indexOfNewPlayerInput++;
+            if (indexOfNewPlayerInput == playerInputs.Count)
+            {
+                Debug.LogError("Cannot add any more players.");
+                return;
+            }
         }
+        playerInputs[indexOfNewPlayerInput] = playerInput;
+        playerReadys[indexOfNewPlayerInput] = false;
+        playerInput.GetComponent<HumanController>().color = playerColors[indexOfNewPlayerInput];
+
+        controllerIcons[indexOfNewPlayerInput].transform.GetChild(0).gameObject.SetActive(true);
+        controllerIcons[indexOfNewPlayerInput].color = playerColors[indexOfNewPlayerInput];
+        
     }
 
-    public void PlayerDisconnected(PlayerInput playerInput)
+    
+
+    public void PlayerLeft(PlayerInput playerInput)
     {
-        int index = playerInputs.IndexOf(playerInput);
-        playerInputs.RemoveAt(index);
+        //int index = playerInputs.IndexOf(playerInput);
+        //playerInputs[index] = null;
+        //playerReadys[index] = true;
+        //controllerIcons[index].transform.GetChild(0).gameObject.SetActive(false);
+        //controllerIcons[index].transform.GetChild(0).GetChild(0).gameObject.SetActive(false);
+        //controllerIcons[index].rectTransform.anchoredPosition = new Vector2(0f, controllerIcons[index].rectTransform.anchoredPosition.y);
+        Debug.Log("Player Left!");
+        // recalculate players on each team and AI count
+
     }
 
     public void PlayerMovedLeftOrRight(PlayerInput playerInput, bool movedLeft, int guiSection)
@@ -245,6 +272,10 @@ public class SelectSidesGui : MonoBehaviour
             List<PlayerInput> team1PlayerInputs = new List<PlayerInput>();
             for (int i = 0; i < playerInputs.Count; i++)
             {
+                if (playerInputs[i] == null)
+                {
+                    continue;
+                }
                 if (playerInputs[i].GetComponent<HumanController>().teamIndex == 0)
                 {
                     team0PlayerInputs.Add(playerInputs[i]);
@@ -257,7 +288,7 @@ public class SelectSidesGui : MonoBehaviour
             MatchSettings.instance.team0PlayerInputs = team0PlayerInputs;
             MatchSettings.instance.team1PlayerInputs = team1PlayerInputs;
             Debug.Log("Starting game!");
-            SceneManager.LoadScene(1);
+            SceneManager.LoadScene(2);
         }
         else
         {
@@ -274,9 +305,18 @@ public class SelectSidesGui : MonoBehaviour
     {
         bool playerIsOnTeam0 = false;
         bool playerIsOnTeam1 = false;
+        List<PlayerInput> enabledInputs = new List<PlayerInput>();
         for (int i = 0; i < playerInputs.Count; i++)
         {
-            HumanController player = playerInputs[i].GetComponent<HumanController>();
+            if (playerInputs[i] != null)
+            {
+                enabledInputs.Add(playerInputs[i]);
+            }
+        }
+        for (int i = 0; i < enabledInputs.Count; i++)
+        {
+
+            HumanController player = enabledInputs[i].GetComponent<HumanController>();
             if (player.teamIndex == 1)
             {
                 playerIsOnTeam1 = true;
@@ -286,16 +326,27 @@ public class SelectSidesGui : MonoBehaviour
                 playerIsOnTeam0 = true;
             }
         }
-        if (playerInputs.Count > 1 && (!playerIsOnTeam0 || !playerIsOnTeam1))
+        if (enabledInputs.Count > 1 && (!playerIsOnTeam0 || !playerIsOnTeam1))
         {
-            StartCoroutine(DisplayError("All controllers must be assigned to a team."));
-            return false;
+            // check that every controller is assigned to a team
+            for (int i = 0; i < enabledInputs.Count; i++)
+            {
+                int teamIndex = enabledInputs[i].GetComponent<HumanController>().teamIndex;
+                if (teamIndex == -1)
+                {
+                    StartCoroutine(DisplayError("All controllers must be assigned to a team."));
+                    return false;
+                }
+            }
         }
 
-        if (playerInputs.Count == 1 && (!playerIsOnTeam0 && !playerIsOnTeam1))
+        if (enabledInputs.Count == 1)
         {
-            StartCoroutine(DisplayError("All controllers must be assigned to a team."));
-            return false;
+            if (enabledInputs[0].GetComponent<HumanController>().teamIndex == -1)
+            {
+                StartCoroutine(DisplayError("All controllers must be assigned to a team."));
+                return false;
+            }
         }
 
         if (team0Players + team0AiCount > maxPlayersOnTeam)

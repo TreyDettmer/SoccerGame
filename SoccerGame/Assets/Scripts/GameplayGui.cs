@@ -12,7 +12,11 @@ public class GameplayGui : MonoBehaviour
     public static GameplayGui instance;
     public EventSystem eventSystem;
     [SerializeField]
-    TextMeshProUGUI scoreLabel;
+    TextMeshProUGUI team0ScoreLabel;
+    [SerializeField]
+    TextMeshProUGUI scoreDashLabel;
+    [SerializeField]
+    TextMeshProUGUI team1ScoreLabel;
     [SerializeField]
     TextMeshProUGUI countdownLabel;
     [SerializeField]
@@ -24,7 +28,9 @@ public class GameplayGui : MonoBehaviour
 
     public TextMeshProUGUI pauseMenuLabel;
     public TextMeshProUGUI pauseMenuGameClockLabel;
-    public TextMeshProUGUI pauseMenuScoreLabel;
+    public TextMeshProUGUI pauseMenuTeam0ScoreLabel;
+    public TextMeshProUGUI pauseMenuScoreDashLabel;
+    public TextMeshProUGUI pauseMenuTeam1ScoreLabel;
 
     private void Awake()
     {
@@ -54,13 +60,16 @@ public class GameplayGui : MonoBehaviour
 
     public void ToggleScoreLabel(bool enable)
     {
-        scoreLabel.enabled = enable;
+        team0ScoreLabel.enabled = enable;
+        team1ScoreLabel.enabled = enable;
+        scoreDashLabel.enabled = enable;
         gameClockLabel.enabled = enable;
     }
 
     public void UpdateScore(int team0Score, int team1Score)
     {
-        scoreLabel.text = team0Score + " - " + team1Score;
+        team0ScoreLabel.text = team0Score.ToString();
+        team1ScoreLabel.text = team1Score.ToString();
     }
 
     public void UpdateCountdown(string newText)
@@ -99,7 +108,8 @@ public class GameplayGui : MonoBehaviour
         resumeButton.SetActive(true);
         eventSystem.SetSelectedGameObject(resumeButton);
         pauseMenuGameClockLabel.text = gameClockLabel.text;
-        pauseMenuScoreLabel.text = scoreLabel.text;
+        pauseMenuTeam0ScoreLabel.text = team0ScoreLabel.text;
+        pauseMenuTeam1ScoreLabel.text = team1ScoreLabel.text;
         if (GameClock.instance.elapsedMinutes == 45f)
         {
             pauseMenuLabel.text = "Halftime";
@@ -145,6 +155,10 @@ public class GameplayGui : MonoBehaviour
 
             }
 
+        }
+        else
+        {
+            pauseMenuLabel.text = "Game Paused";
         }
         pauseMenu.SetActive(enable);
         
