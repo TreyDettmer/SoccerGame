@@ -51,8 +51,10 @@ public class Player : MonoBehaviour
     public float currentMaxSpeed;
     private Vector3 unitGoalVelocity;
     private Vector3 previousPosition;
+    private Vector3 previousVelocity;
     private Vector3 currentPosition;
     [HideInInspector] public Vector3 currentVelocity;
+    [HideInInspector] public Vector3 currentAccelerationVector;
 
     [Header("Physics")]
     public float defaultHeight;
@@ -159,6 +161,7 @@ public class Player : MonoBehaviour
     bool isRagdolled = false;
     [SerializeField] float ragdollSlideForceMultiplier = 3f;
     [SerializeField] ParticleSystem slideDirt;
+    [SerializeField] RawImage hasBallImage;
     #endregion
 
     public PlayerState playerState;
@@ -176,7 +179,6 @@ public class Player : MonoBehaviour
 
     [HideInInspector]
     public Vector3 myGoalsPosition = Vector3.zero;
-    [HideInInspector]
     public Vector3 opponentsGoalsPosition = Vector3.zero;
     [HideInInspector]
     public LayerMask playerLayerMask;
@@ -253,7 +255,11 @@ public class Player : MonoBehaviour
         }
         if (gameState == GameState.Gameplay)
         {
-
+            // reset player if outside of map
+            if (Mathf.Abs(transform.position.x) > 38f || Mathf.Abs(transform.position.y) > 10f || Mathf.Abs(transform.position.z) > 60f)
+            {
+                GameplayManager.instance.ResetPlayer(this);
+            }
             // if we do not have the ball
             if (!HasBall)
             {
@@ -336,7 +342,9 @@ public class Player : MonoBehaviour
             return;
         }
         currentPosition = Rb.position;
+        previousVelocity = currentVelocity;
         currentVelocity = ((currentPosition - previousPosition) / Time.fixedDeltaTime);
+        currentAccelerationVector = (currentVelocity - previousVelocity) / Time.fixedDeltaTime;
         float speed = currentVelocity.magnitude;
         previousPosition = currentPosition;
         animator.SetFloat("speed", Mathf.Clamp(speed / (sprintingMaxSpeed - 4f), 0f, 1f));
@@ -496,7 +504,6 @@ public class Player : MonoBehaviour
                     Vector3 right = new Vector3(transform.right.x, 0f, transform.right.z).normalized;
                     float sideDot = Vector3.SignedAngle(sideCurveDirection, forward, Vector3.up);
                     float topDot = Vector3.SignedAngle(topCurveDirection, right, Vector3.up);
-                    Debug.Log("SideDot: " + sideDot + " TopDot: " + topDot);
                     Vector3 torque;
                     // dot products are flipped based on the team (direction camera is facing)
                     if (teamIndex == 1)
@@ -744,6 +751,7 @@ public class Player : MonoBehaviour
 
     public virtual void BallEvent(Player playerWithBall)
     {
+        hasBallImage.color = new Color(1f, 1f, 1f, 0.5f);
         if (aiController == null)
         {
             aiController = GetComponent<AiController>();
@@ -765,6 +773,7 @@ public class Player : MonoBehaviour
             if (playerWithBall == this)
             {
                 aiController.UpdateAiState(AiController.AIState.Dribbling);
+                hasBallImage.color = new Color(1f, 0.85f, 0f, 0.5f);
             }
             else
             {

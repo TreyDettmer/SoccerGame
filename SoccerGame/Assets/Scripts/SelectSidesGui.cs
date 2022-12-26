@@ -58,6 +58,17 @@ public class SelectSidesGui : MonoBehaviour
         {
             PlayerJoined(existingPlayerInputs[i]);
         }
+
+        // ensure that player inputs start in the select sides section, not the AI count section
+        for (int i = 0; i < playerInputs.Count; i++)
+        {
+            if (playerInputs[i] == null)
+            {
+                continue;             
+            }
+            playerInputs[i].GetComponent<HumanController>().guiSection = 1;
+            PlayerMovedUpOrDown(playerInputs[i], true, 1);
+        }
     }
 
     // Update is called once per frame

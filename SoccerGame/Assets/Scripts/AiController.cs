@@ -2,10 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class AiController : MonoBehaviour
 {
-
+    public bool shouldAnticipateChangeInDirection = true;
 
 
     public Player myPlayer { get; set; }
@@ -33,6 +34,17 @@ public class AiController : MonoBehaviour
     [HideInInspector] public TeamBrain teamBrain;
     Transform formationSpot = null;
 
+    public float defensiveOneOnOneDistance = 3f;
+    public float defensiveSurroundingDistance = 4f;
+    public float defensiveSurroundingAngle = 45f;
+
+    private NavMeshAgent navMeshAgent;
+    private NavMeshPath navMeshPath;
+    private List<Vector3> navMeshPathWaypoints = new List<Vector3>();
+
+    bool hasOpenPositionWaypoint = false;
+    Vector3 openPositionWaypoint = Vector3.zero;
+    public float waypointSearchRadius = 10f;
 
     public enum AIState
     {
@@ -87,6 +99,9 @@ public class AiController : MonoBehaviour
     {
         myPlayer = GetComponent<Player>();
         goalLayerMask = FindObjectOfType<Goal>().gameObject.layer;
+        navMeshAgent = GetComponent<NavMeshAgent>();
+        navMeshPath = new NavMeshPath();
+        navMeshAgent.enabled = false;
     }
 
     public void Initialize()
@@ -109,9 +124,15 @@ public class AiController : MonoBehaviour
         }
     }
 
-    public void OnGameplayStart()
+    public void OnDrawGizmosSelected()
     {
-
+        if (navMeshPathWaypoints.Count > 1)
+        {
+            for (int i = 1; i < navMeshPathWaypoints.Count; i++)
+            {
+                Debug.DrawLine(navMeshPathWaypoints[i - 1], navMeshPathWaypoints[i], Color.red);
+            }
+        }
     }
 
     public void UpdateAiState(AIState _aiState)
@@ -123,6 +144,7 @@ public class AiController : MonoBehaviour
         }
         if (_aiState == AIState.Dribbling)
         {
+            
             aiState = AIState.Dribbling;
         }
         else if (_aiState == AIState.Defending)
@@ -185,6 +207,11 @@ public class AiController : MonoBehaviour
         }
         else if (aiState == AIState.Dribbling)
         {
+            if (myPlayer)
+            {
+                CalculateNavmeshPath(myPlayer.opponentsGoalsPosition);
+            }
+            
             DribbleBall();
         }
         else if (aiState == AIState.Shooting)
@@ -193,6 +220,10 @@ public class AiController : MonoBehaviour
         }
         else if (aiState == AIState.Passing)
         {
+            if (myPlayer)
+            {
+                CalculateNavmeshPath(playerImPassingTo.transform.position);
+            }
             PassBall();
         }
 
@@ -236,7 +267,15 @@ public class AiController : MonoBehaviour
     void PassBall()
     {
         //Vector3 direction = CalculateInterceptCourse(playerImPassingTo.transform.position, playerImPassingTo.currentVelocity, transform.position, myPlayer.sprintingMaxSpeed);
-        Vector3 direction = playerImPassingTo.transform.position - transform.position;
+        Vector3 direction;
+        if (navMeshPathWaypoints.Count > 1)
+        {
+            direction = navMeshPathWaypoints[1] - transform.position;
+        }
+        else
+        {
+            direction = playerImPassingTo.transform.position - transform.position;
+        }
         Vector3 relativeDirection;
         if (myPlayer.teamIndex == 1)
         {
@@ -255,11 +294,48 @@ public class AiController : MonoBehaviour
 
     public bool CheckForOpenTeammate()
     {
-        Player optimalTeammateToPassTo = PitchGrid.instance.FindOptimalTeammateToPassTo(myPlayer);
-        if (optimalTeammateToPassTo != null)
+        for (int i = 0; i < myPlayer.teammates.Count; i++)
         {
-            playerImPassingTo = optimalTeammateToPassTo;
-            return true;
+            Player teammate = myPlayer.teammates[i];
+            // check if teammate is closer to the goal
+            if ((teammate.transform.position - myPlayer.opponentsGoalsPosition).sqrMagnitude < (myPlayer.teammates[i].transform.position - myPlayer.opponentsGoalsPosition).sqrMagnitude)
+            {
+
+                // check that there are less opponents around teammate
+                if (GetNearestOpponentDistance(myPlayer) < GetNearestOpponentDistance(teammate))
+                {
+
+                    RaycastHit hit;
+                    // check if we have pass path to the teammate
+                    Debug.DrawRay(transform.position, transform.position - teammate.transform.position, Color.cyan);
+                    if (Physics.Raycast(transform.position, transform.position - teammate.transform.position, out hit, (transform.position - teammate.transform.position).magnitude, myPlayer.playerLayerMask) && hit.collider.gameObject == teammate.gameObject)
+                    {
+
+                        // check if teammate has a shot on goal
+                        if (!Physics.SphereCast(teammate.transform.position, shotClearanceNeeded, (myPlayer.opponentsGoalsPosition - teammate.transform.position).normalized, out hit, (myPlayer.opponentsGoalsPosition - teammate.transform.position).magnitude, myPlayer.playerLayerMask))
+                        {
+                            playerImPassingTo = teammate;
+                            return true;
+                        }
+                        else
+                        {
+                            Debug.Log("No shot on goal");
+                        }
+                    }
+                    else
+                    {
+                        Debug.Log("No pass path");
+                    }
+                }
+                else
+                {
+                    Debug.Log("Not as open");
+                }
+            }
+            else
+            {
+                Debug.Log("Not closer");
+            }
         }
         return false;
     }
@@ -298,7 +374,15 @@ public class AiController : MonoBehaviour
         }
         if (direction == Vector3.zero)
         {
-            direction = myPlayer.opponentsGoalsPosition - transform.position;
+            if (navMeshPathWaypoints.Count > 1)
+            {
+                direction = navMeshPathWaypoints[1] - transform.position;
+            }
+            else
+            {
+                direction = myPlayer.opponentsGoalsPosition - transform.position;
+            }
+            
         }
         Vector3 relativeDirection;
         if (myPlayer.teamIndex == 1)
@@ -317,7 +401,7 @@ public class AiController : MonoBehaviour
 
     void PursueBall()
     {
-        Vector3 direction = CalculateInterceptCourse(myPlayer.ball.transform.position, myPlayer.ballRb.velocity, transform.position, myPlayer.sprintingMaxSpeed);
+        Vector3 direction = CalculateInterceptCourse(myPlayer.ball.transform.position, myPlayer.ball.currentVelocity,myPlayer.ball.currentAccelerationVector, transform.position, myPlayer.sprintingMaxSpeed);
         Vector3 relativeDirection;
         if (myPlayer.teamIndex == 1)
         {
@@ -345,20 +429,85 @@ public class AiController : MonoBehaviour
             for (int i = 0; i < myPlayer.teammates.Count; i++)
             {
                 // check if teammate is in a defensive position against this opponent
-                if ((myPlayer.teammates[i].transform.position - (myPlayer.ball.owner.transform.position + directionToMyGoal * 4f)).sqrMagnitude < 6f)
+                if ((myPlayer.teammates[i].transform.position - (myPlayer.ball.owner.transform.position + directionToMyGoal * defensiveOneOnOneDistance)).sqrMagnitude < 4f)
                 {
                     isAlreadyDefended = true;
                     break;
                 }
             }
-            if (isAlreadyDefended)
+            if (!isAlreadyDefended)
             {
-                desiredPosition = myPlayer.ball.transform.position;
+                // stand between opponent and goal
+                desiredPosition = myPlayer.ball.owner.transform.position + directionToMyGoal * defensiveOneOnOneDistance;
             }
             else
             {
-                desiredPosition = myPlayer.ball.owner.transform.position + directionToMyGoal * 4f;
+                // surround the opponent
+                
+                Vector3 sideVector1 = Quaternion.AngleAxis(-defensiveSurroundingAngle, Vector3.up) * directionToMyGoal.normalized * defensiveSurroundingDistance;
+                Vector3 sideVector2 = Quaternion.AngleAxis(defensiveSurroundingAngle, Vector3.up) * directionToMyGoal.normalized * defensiveSurroundingDistance;
+
+                Debug.DrawRay(myPlayer.ball.owner.transform.position, sideVector1, Color.black);
+                Debug.DrawRay(myPlayer.ball.owner.transform.position, sideVector2, Color.black);
+
+                Vector3 nearVector;
+                Vector3 farVector;
+                // determine whether it's better to be more to the left or more to the right of the opponent
+                if (Mathf.Abs((myPlayer.ball.owner.transform.position + sideVector1).x) < Mathf.Abs((myPlayer.ball.owner.transform.position + sideVector2).x))
+                {
+                    nearVector = sideVector1;
+                    farVector = sideVector2;
+                }
+                else
+                {
+                    nearVector = sideVector2;
+                    farVector = sideVector1;
+                }
+                bool isAlreadyDefendedNearGoal = false;
+                for (int i = 0; i < myPlayer.teammates.Count; i++)
+                {
+
+                    if ((myPlayer.teammates[i].transform.position - (myPlayer.ball.owner.transform.position + nearVector)).sqrMagnitude < 3f)
+                    {
+                        isAlreadyDefendedNearGoal = true;
+                        break;
+                    }
+                }
+                if (isAlreadyDefendedNearGoal)
+                {
+                    bool isAlreadyDefendedFarGoal = false;
+                    for (int i = 0; i < myPlayer.teammates.Count; i++)
+                    {
+
+                        if ((myPlayer.teammates[i].transform.position - (myPlayer.ball.owner.transform.position + farVector)).sqrMagnitude < 3f)
+                        {
+                            isAlreadyDefendedFarGoal = true;
+                            break;
+                        }
+                    }
+                    if (isAlreadyDefendedFarGoal)
+                    {
+                        // go for the ball
+                        desiredPosition = myPlayer.ball.transform.position;
+                    }
+                    else
+                    {
+                        desiredPosition = myPlayer.ball.owner.transform.position + farVector;
+                    }
+                }
+                else
+                {
+                    desiredPosition = myPlayer.ball.owner.transform.position + nearVector;
+                }
+
+
             }
+
+
+
+            // surround player
+
+
             if ((transform.position - desiredPosition).sqrMagnitude < 6)
             {
                 myPlayer.IsSprinting = false;
@@ -367,19 +516,14 @@ public class AiController : MonoBehaviour
             {
                 myPlayer.IsSprinting = true;
             }
-            Vector3 direction = CalculateInterceptCourse(desiredPosition, myPlayer.ball.owner.currentVelocity, transform.position, myPlayer.sprintingMaxSpeed);
-            if (direction == Vector3.zero)
-            {
-                Debug.DrawRay(transform.position, myPlayer.ball.owner.transform.position - transform.position, Color.black);
-            }
-            else
-            {
-                Debug.DrawRay(transform.position, direction, Color.red);
-            }
-            if (direction == Vector3.zero)
-            {
-                direction = myPlayer.ball.owner.transform.position - transform.position;
-            }
+            
+            Vector3 direction = CalculateInterceptCourse(desiredPosition, myPlayer.ball.owner.currentVelocity, myPlayer.ball.owner.currentAccelerationVector, transform.position, myPlayer.sprintingMaxSpeed,true);
+            Debug.DrawRay(desiredPosition, Vector3.up * 3f, Color.red);
+            
+            //if (direction == Vector3.zero)
+            //{
+            //    direction = myPlayer.ball.owner.transform.position - transform.position;
+            //}
 
             Vector3 relativeDirection;
             if (myPlayer.teamIndex == 1)
@@ -463,27 +607,36 @@ public class AiController : MonoBehaviour
         return goalPosition;
     }
 
-    // move to a position where the player with ball can pass to me
+    // move to an "open" position around the teammate with the ball
     private void GetOpen()
     {
-        
-        if (formationSpot == null)
+        // if we don't have a waypoint or have reached the previous waypoint, create a new waypoint
+        if (!hasOpenPositionWaypoint || (openPositionWaypoint - transform.position).sqrMagnitude < 4f)
         {
-            formationSpot = teamBrain.GetAssignedFormationSpot(myPlayer);
-            
+            // get random location around teammate with ball
+            Vector3 randomPosition = myPlayer.ball.owner.transform.position + Random.insideUnitSphere * waypointSearchRadius;
+            // ensure random position is with field bounds and not too close to the player with the ball
+            while (randomPosition.x > 35f || randomPosition.x < -35f || randomPosition.z > 55f || randomPosition.z < -55f || (myPlayer.ball.owner.transform.position - randomPosition).sqrMagnitude < 4f)
+            {
+                randomPosition = myPlayer.ball.owner.transform.position + Random.insideUnitSphere * waypointSearchRadius;
+            }
+            randomPosition.y = myPlayer.ball.owner.transform.position.y;
+            openPositionWaypoint = randomPosition;
+
+            hasOpenPositionWaypoint = true;
         }
-        Vector3 whereToMove = formationSpot.position; //  PitchGrid.instance.FindOptimalSpaceForPlayer(myPlayer);
+
         Vector3 relativeDirection;
         if (myPlayer.teamIndex == 1)
         {
-            relativeDirection = whereToMove - transform.position;
+            relativeDirection = openPositionWaypoint - transform.position;
         }
         else
         {
-            relativeDirection = -(whereToMove - transform.position);
+            relativeDirection = -(openPositionWaypoint - transform.position);
         }
-        myPlayer.verticalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.z) / 8f) * -Mathf.Sign(relativeDirection.z);
-        myPlayer.horizontalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.x) / 8f) * -Mathf.Sign(relativeDirection.x);
+        myPlayer.verticalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.z)) * -Mathf.Sign(relativeDirection.z);
+        myPlayer.horizontalInput = Mathf.Clamp01(Mathf.Abs(relativeDirection.x)) * -Mathf.Sign(relativeDirection.x);
     }
 
     public Vector3 FindNearestPointOnLine(Vector3 origin, Vector3 end, Vector3 point)
@@ -598,15 +751,15 @@ public class AiController : MonoBehaviour
         float squareDistance = (currentShotPlacement - transform.position).sqrMagnitude;
         if (squareDistance < 250f)
         {
-            return .3f;
+            return .2f;
         }
         else if (squareDistance < 810f)
         {
-            return .4f;
+            return .3f;
         }
         else
         {
-            return .5f;
+            return .4f;
         }
     }
 
@@ -648,24 +801,49 @@ public class AiController : MonoBehaviour
 
 
 
-    // Method from Unity user Bunny83 at https://answers.unity.com/questions/296949/how-to-calculate-a-position-to-fire-at.html
-    public static Vector3 CalculateInterceptCourse(Vector3 aTargetPos, Vector3 aTargetSpeed, Vector3 aInterceptorPos, float aInterceptorSpeed)
+    // Modified version of function from Unity user Bunny83 at https://answers.unity.com/questions/296949/how-to-calculate-a-position-to-fire-at.html
+    public Vector3 CalculateInterceptCourse(Vector3 aTargetPos, Vector3 aTargetSpeed, Vector3 aTargetAcceleration, Vector3 aInterceptorPos, float aInterceptorSpeed, bool shouldLog = false)
     {
+
+        float dotOfTargetVelAndAcc = Vector3.Dot(aTargetSpeed, aTargetAcceleration);
+        float dotOfTargetAccAndIntVel = Vector3.Dot(aTargetAcceleration, myPlayer.currentVelocity);
+
+        if (dotOfTargetVelAndAcc < -30f && shouldAnticipateChangeInDirection)
+        {
+            // since the thing we are chasing is likely changing directions, try to anticipate that change
+            //aTargetSpeed *= -1f;
+            if (shouldLog)
+            {
+                ////Debug.Log("TargetAcc: " + aTargetAcceleration + " IntVel: " + myPlayer.currentVelocity + " Dot: " + dotOfTargetAccAndIntVel);
+                //Debug.Log("TargetVel: " + aTargetSpeed + " TargetAcc: " + aTargetAcceleration + " Dot: " + dotOfTargetVelAndAcc);
+                //desiredPosition = aTargetPos + aTargetAcceleration.normalized * 5f;
+                //Debug.DrawRay(transform.position, (aTargetPos + aTargetAcceleration.normalized * 5f) - aInterceptorPos, Color.black);
+                ////desiredPosition = transform.position + (aTargetPos - aInterceptorPos);
+                //return (aTargetPos + aTargetAcceleration.normalized * 5f) - aInterceptorPos;
+                
+            }
+        }
+        else
+        {
+            
+        }
+
         Vector3 targetDir = aTargetPos - aInterceptorPos;
         float iSpeed2 = aInterceptorSpeed * aInterceptorSpeed;
         float tSpeed2 = aTargetSpeed.sqrMagnitude;
         float fDot1 = Vector3.Dot(targetDir, aTargetSpeed);
+
         float targetDist2 = targetDir.sqrMagnitude;
         float d = (fDot1 * fDot1) - targetDist2 * (tSpeed2 - iSpeed2);
         if (d < 0.1f)  // negative == no possible course because the interceptor isn't fast enough
-            return aTargetPos;
+            return aTargetPos + aTargetSpeed.normalized * 3f;
         float sqrt = Mathf.Sqrt(d);
         float S1 = (-fDot1 - sqrt) / targetDist2;
         float S2 = (-fDot1 + sqrt) / targetDist2;
         if (S1 < 0.0001f)
         {
             if (S2 < 0.0001f)
-                return aTargetPos;
+                return aTargetPos + aTargetSpeed.normalized * 3f;
             else
                 return (S2) * targetDir + aTargetSpeed;
         }
@@ -688,6 +866,30 @@ public class AiController : MonoBehaviour
             //    teamBrain.PlayerStoppedDefendingBall(myPlayer);
             //}
         }
+    }
+
+    public void CalculateNavmeshPath(Vector3 destination)
+    {
+        if (!myPlayer) return;
+        if (NavMesh.CalculatePath(transform.position + transform.forward * 3f, destination, NavMesh.AllAreas, navMeshPath))
+        {
+            navMeshPathWaypoints = new List<Vector3>(navMeshPath.corners);
+        }
+
+    }
+
+    public float GetNearestOpponentDistance(Player player)
+    {
+        float nearestOpponentSquareDistance = 1000f;
+        for (int opponentIndex = 0; opponentIndex < player.opponents.Count; opponentIndex++)
+        {
+            float squareDistance = (player.transform.position - player.opponents[opponentIndex].transform.position).sqrMagnitude;
+            if (squareDistance < nearestOpponentSquareDistance)
+            {
+                nearestOpponentSquareDistance = squareDistance;
+            }
+        }
+        return nearestOpponentSquareDistance;
     }
 
 }

@@ -155,7 +155,10 @@ public class HumanController : MonoBehaviour
         {
             return;
         }
-        GameplayManager.instance.HumanControllerSwitchPlayers(myPlayer, this);
+        if (context.performed)
+        {
+            GameplayManager.instance.HumanControllerSwitchPlayers(myPlayer, this);
+        }
     }
 
     public void OnJump(InputAction.CallbackContext context)

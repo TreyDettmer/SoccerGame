@@ -294,6 +294,27 @@ public class GameplayManager : MonoBehaviour
     }
 
 
+    // called when a player somehow goes out of the map
+    public void ResetPlayer(Player player)
+    {
+        if (player.teamIndex == 0)
+        {
+            player.transform.position = team0SpawnPoints[0].position;
+            player.transform.rotation = team0SpawnPoints[0].rotation;
+            player.GetComponent<Rigidbody>().velocity = Vector3.zero;
+            player.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
+            player.ResetValues();
+        }
+        else
+        {
+            player.transform.position = team1SpawnPoints[0].position;
+            player.transform.rotation = team1SpawnPoints[0].rotation;
+            player.GetComponent<Rigidbody>().velocity = Vector3.zero;
+            player.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
+            player.ResetValues();
+        }
+    }
+
     IEnumerator PostGoalRoutine(float duration)
     {
         postGoalRoutineIsRunning = true;

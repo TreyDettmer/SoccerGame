@@ -17,6 +17,10 @@ public class Ball : MonoBehaviour
 
     public Player lastKickedBy;
     public Player owner;
+    private Vector3 previousPosition;
+    private Vector3 previousVelocity;
+    [HideInInspector] public Vector3 currentVelocity;
+    [HideInInspector] public Vector3 currentAccelerationVector;
 
     // Start is called before the first frame update
     void Start()
@@ -31,7 +35,6 @@ public class Ball : MonoBehaviour
         {
             if (lastKickedBy != null)
             {
-                Debug.Log("Last Kicked by " + lastKickedBy);
                 if (lastKickedBy.teamIndex == 0)
                 {
                     GameplayManager.instance.HandleOutOfBounds(1);
@@ -51,6 +54,10 @@ public class Ball : MonoBehaviour
 
     private void FixedUpdate()
     {
+        previousVelocity = currentVelocity;
+        currentVelocity = (transform.position - previousPosition) / Time.fixedDeltaTime;
+        previousPosition = transform.position;
+        currentAccelerationVector = (currentVelocity - previousVelocity) / Time.fixedDeltaTime;
         if (collidedObjectCount == 0)
         {
             var direction = Vector3.Cross(rb.angularVelocity, rb.velocity);
@@ -64,6 +71,10 @@ public class Ball : MonoBehaviour
     private void OnCollisionEnter(Collision collision)
     {
         collidedObjectCount++;
+        if (collision.collider.gameObject.GetComponent<Player>())
+        {
+            lastKickedBy = collision.collider.gameObject.GetComponent<Player>();
+        }
     }
     private void OnCollisionExit(Collision collision)
     {
