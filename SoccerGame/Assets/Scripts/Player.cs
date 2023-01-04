@@ -34,7 +34,6 @@ public class Player : MonoBehaviour
 
     [Header("Movement")]
     public float maxSpeed;
-    public float sprintingMaxSpeed = 4f;
     public float acceleration;
     public float maxAccelForce;
     public float speedFactor = 1f;
@@ -48,7 +47,6 @@ public class Player : MonoBehaviour
     public Transform graphicsTransform;
     public float horizontalInput;
     public float verticalInput;
-    public float currentMaxSpeed;
     private Vector3 unitGoalVelocity;
     private Vector3 previousPosition;
     private Vector3 previousVelocity;
@@ -116,8 +114,6 @@ public class Player : MonoBehaviour
     [SerializeField]
     private float ballDribbleDirectionFactor = .3f;
 
-
-    public bool IsSprinting { get; set; } = false;
     [HideInInspector] public bool CanDribble { get; set; } = true;
     [HideInInspector] public bool IsGrounded { get; set; } = false;
     [HideInInspector] public bool IsJumping { get; set; } = false;
@@ -197,15 +193,22 @@ public class Player : MonoBehaviour
         playerState = PlayerState.Waiting;
         Rb = GetComponent<Rigidbody>();
         playerState = PlayerState.Waiting;
-        currentMaxSpeed = maxSpeed;
         ball = FindObjectOfType<Ball>();
         ballRb = ball.GetComponent<Rigidbody>();
         audioSource = GetComponent<AudioSource>();
-        Goalie[] goalieObjects = FindObjectsOfType<Goalie>();
+
         ragdollColliders = rig.GetComponentsInChildren<Collider>();
         limbsRigidbodies = rig.GetComponentsInChildren<Rigidbody>();
         slideDirt.Stop();
         ToggleRagdoll(false);
+
+
+
+    }
+
+    public void InitializeTeamInfo()
+    {
+        Goalie[] goalieObjects = FindObjectsOfType<Goalie>();
         for (int i = 0; i < goalieObjects.Length; i++)
         {
             if (goalieObjects[i].teamIndex == teamIndex)
@@ -213,7 +216,6 @@ public class Player : MonoBehaviour
                 myGoalie = goalieObjects[i];
             }
         }
-
 
         myGoalsPosition = GameplayManager.instance.GetGoalPositionForTeam(teamIndex);
         opponentsGoalsPosition = teamIndex == 0 ? GameplayManager.instance.GetGoalPositionForTeam(1) : GameplayManager.instance.GetGoalPositionForTeam(0);
@@ -347,7 +349,7 @@ public class Player : MonoBehaviour
         currentAccelerationVector = (currentVelocity - previousVelocity) / Time.fixedDeltaTime;
         float speed = currentVelocity.magnitude;
         previousPosition = currentPosition;
-        animator.SetFloat("speed", Mathf.Clamp(speed / (sprintingMaxSpeed - 4f), 0f, 1f));
+        animator.SetFloat("speed", Mathf.Clamp(speed / (maxSpeed - 4f), 0f, 1f));
 
         if (IsSliding)
         {
@@ -384,7 +386,7 @@ public class Player : MonoBehaviour
         Vector3 unitVelocity = new Vector3(Rb.velocity.x, 0f, Rb.velocity.z);
         float velDot = Vector3.Dot(unitGoalVelocity, unitVelocity);
         float accel = acceleration * AccelerationFactorFromDot.Evaluate(velDot);
-        Vector3 _goalVelocity = unitGoalVelocity * currentMaxSpeed * speedFactor;
+        Vector3 _goalVelocity = unitGoalVelocity * maxSpeed * speedFactor;
             
         goalVelocity = Vector3.MoveTowards(goalVelocity, _goalVelocity, accel * Time.fixedDeltaTime);
         Vector3 neededAccel = (goalVelocity - Rb.velocity) / Time.fixedDeltaTime;
@@ -414,14 +416,6 @@ public class Player : MonoBehaviour
                 IsJumping = false;
             }
 
-        }
-        if (IsSprinting)
-        {
-            currentMaxSpeed = sprintingMaxSpeed;
-        }
-        else
-        {
-            currentMaxSpeed = maxSpeed;
         }
         
     }
@@ -490,7 +484,7 @@ public class Player : MonoBehaviour
             {
                 if (HasBall)
                 {
-                    audioSource.PlayOneShot(kickClip);
+                    AudioManager.instance.Play("Kick");
                     Vector3 directionToBall = (ball.transform.position - transform.position).normalized;
                     Vector3 sideCurveDirection = (transform.right * horizontalInput).normalized;
                     Vector3 topCurveDirection = (transform.forward * -verticalInput).normalized;
@@ -545,13 +539,13 @@ public class Player : MonoBehaviour
 
         if (teamIndex == 1)
         {
-            int randomSkinIndex = Random.Range(0, redTeamSkins.Length - 1);
+            int randomSkinIndex = Random.Range(0, redTeamSkins.Length);
             redTeamSkins[randomSkinIndex].SetActive(true);
             meshRenderer = redTeamSkins[randomSkinIndex].GetComponent<SkinnedMeshRenderer>();
         }
         else
         {
-            int randomSkinIndex = Random.Range(0, blueTeamSkins.Length - 1);
+            int randomSkinIndex = Random.Range(0, blueTeamSkins.Length);
             blueTeamSkins[randomSkinIndex].SetActive(true);
             meshRenderer = blueTeamSkins[randomSkinIndex].GetComponent<SkinnedMeshRenderer>();
         }
@@ -559,9 +553,19 @@ public class Player : MonoBehaviour
 
     public virtual void ResetValues()
     {
+        animator.SetBool("isSliding", false);
         animator.Play("Movement",-1,0f);
+        StopAllCoroutines();
+        if (meshRenderer)
+            meshRenderer.enabled = true;
+        animator.SetBool("isPenalized", false);
+        isKicking = false;
+        isPoweringUpKick = false;
+        IsSliding = false;
         HasBall = false;
         CanDribble = true;
+        CanSlide = true;
+        
     }
 
     public virtual void UpdatePlayerState(PlayerState newState)
@@ -634,8 +638,6 @@ public class Player : MonoBehaviour
 
     public void BallStolen()
     {
-        //int randomGruntIndex = Random.Range(0, collisionGrunts.Length);
-        //audioSource.PlayOneShot(collisionGrunts[randomGruntIndex]);
         ball.SetOwner(null);
         HasBall = false;
         StartCoroutine(BallPickupCooldownRoutine());
@@ -699,7 +701,7 @@ public class Player : MonoBehaviour
 
     public void OnFouled()
     {
-        audioSource.PlayOneShot(fouledGrunt);
+        AudioManager.instance.Play("FoulGrunt");
     }
 
     public void Slide()
@@ -708,14 +710,14 @@ public class Player : MonoBehaviour
         {
             return;
         }
-        currentMaxSlideSpeed = Mathf.Clamp01(currentVelocity.magnitude / (sprintingMaxSpeed - 4f)) * maxSlideSpeed;
-        currentSlideForce = Mathf.Clamp01(currentVelocity.magnitude / (sprintingMaxSpeed - 4f)) * maxSlideForce;
+        currentMaxSlideSpeed = Mathf.Clamp01(currentVelocity.magnitude / (maxSpeed - 4f)) * maxSlideSpeed;
+        currentSlideForce = Mathf.Clamp01(currentVelocity.magnitude / (maxSpeed - 4f)) * maxSlideForce;
         IsSliding = true;
         slideDirection = transform.forward;
         slideDirection.y = 0;
         slideDirection = slideDirection.normalized;
         animator.SetBool("isSliding", true);
-        
+        AudioManager.instance.Play("Slide");
         StartCoroutine(SlideRoutine());
     }
 
@@ -790,7 +792,6 @@ public class Player : MonoBehaviour
             {
                 aiController = GetComponent<AiController>();
             }
-            aiController.NotifyBrainOfDetachment();
             aiController.enabled = false;
             cameraPlayerGui = humanController.cameraPlayerGui;
         }

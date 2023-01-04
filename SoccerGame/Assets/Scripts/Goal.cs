@@ -38,7 +38,7 @@ public class Goal : MonoBehaviour
 
             if (ball.owner == null)
             {
-                audioSource.Play();
+                AudioManager.instance.Play("Crossbar");
             }
             else if (ball.owner != this)
             {

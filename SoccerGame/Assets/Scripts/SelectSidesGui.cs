@@ -10,7 +10,11 @@ public class SelectSidesGui : MonoBehaviour
 {
     public static SelectSidesGui instance;
     private int playerCount = 0;
-    public Image[] controllerIcons;
+    public RectTransform[] controllerIcons;
+    public Sprite keyboardAndMouseBackgroundSprite;
+    public Sprite keyboardAndMouseForegroundSprite;
+    public Sprite controllerBackgroundSprite;
+    public Sprite controllerForegroundSprite;
     private List<PlayerInput> playerInputs = new List<PlayerInput>();
     private List<bool> playerReadys = new List<bool>();
     public Color[] playerColors = { Color.blue, Color.red, Color.green, Color.yellow, Color.magenta, Color.cyan };
@@ -19,6 +23,7 @@ public class SelectSidesGui : MonoBehaviour
     public TextMeshProUGUI team0AiCountLabel;
     public TextMeshProUGUI team1AiCountLabel;
     public TextMeshProUGUI errorLabel;
+    public TextMeshProUGUI instructionsLabel;
     int team0Players = 0;
     int team1Players = 0;
     int team0AiCount = 1;
@@ -48,7 +53,7 @@ public class SelectSidesGui : MonoBehaviour
     {
         audioSource = GetComponent<AudioSource>();
         UpdateAiCountLabels();
-        for (int i = 0; i < 6; i++)
+        for (int i = 0; i < 4; i++)
         {
             playerInputs.Add(null);
             playerReadys.Add(true);
@@ -92,10 +97,19 @@ public class SelectSidesGui : MonoBehaviour
         playerInputs[indexOfNewPlayerInput] = playerInput;
         playerReadys[indexOfNewPlayerInput] = false;
         playerInput.GetComponent<HumanController>().color = playerColors[indexOfNewPlayerInput];
-
+        if (playerInput.devices[0].name == "Keyboard" || playerInput.devices[0].name == "Mouse")
+        {
+            controllerIcons[indexOfNewPlayerInput].GetComponent<Image>().sprite = keyboardAndMouseBackgroundSprite;
+            controllerIcons[indexOfNewPlayerInput].transform.GetChild(0).gameObject.GetComponent<Image>().sprite = keyboardAndMouseForegroundSprite;
+        }
+        else
+        {
+            controllerIcons[indexOfNewPlayerInput].GetComponent<Image>().sprite = controllerBackgroundSprite;
+            controllerIcons[indexOfNewPlayerInput].transform.GetChild(0).gameObject.GetComponent<Image>().sprite = controllerForegroundSprite;
+        }
         controllerIcons[indexOfNewPlayerInput].transform.GetChild(0).gameObject.SetActive(true);
-        controllerIcons[indexOfNewPlayerInput].color = playerColors[indexOfNewPlayerInput];
-        
+        controllerIcons[indexOfNewPlayerInput].GetComponent<Image>().color = playerColors[indexOfNewPlayerInput];
+        AudioManager.instance.Play("UI_Click");
     }
 
     
@@ -120,9 +134,9 @@ public class SelectSidesGui : MonoBehaviour
         {
             if (movedLeft)
             {
-                if (controllerIcons[index].rectTransform.anchoredPosition.x == 0f)
+                if (controllerIcons[index].anchoredPosition.x == 0f)
                 {
-                    controllerIcons[index].rectTransform.anchoredPosition = new Vector2(-60f, controllerIcons[index].rectTransform.anchoredPosition.y);
+                    controllerIcons[index].anchoredPosition = new Vector2(-60f, controllerIcons[index].anchoredPosition.y);
                     playerInput.GetComponent<HumanController>().teamIndex = 0;
                     team0Players += 1;
                     if (team0Players + team0AiCount > maxPlayersOnTeam)
@@ -130,12 +144,12 @@ public class SelectSidesGui : MonoBehaviour
                         team0AiCount = maxPlayersOnTeam - team0Players;
                         UpdateAiCountLabels();
                     }
-                    audioSource.PlayOneShot(clickSound);
+                    AudioManager.instance.Play("UI_Click");
 
                 }
-                else if (controllerIcons[index].rectTransform.anchoredPosition.x > 0f)
+                else if (controllerIcons[index].anchoredPosition.x > 0f)
                 {
-                    controllerIcons[index].rectTransform.anchoredPosition = new Vector2(0f, controllerIcons[index].rectTransform.anchoredPosition.y);
+                    controllerIcons[index].anchoredPosition = new Vector2(0f, controllerIcons[index].anchoredPosition.y);
                     team1Players -= 1;
                     if (team1Players == 0 && team1AiCount <= 0)
                     {
@@ -143,14 +157,14 @@ public class SelectSidesGui : MonoBehaviour
                         UpdateAiCountLabels();
                     }
                     playerInput.GetComponent<HumanController>().teamIndex = -1;
-                    audioSource.PlayOneShot(clickSound);
+                    AudioManager.instance.Play("UI_Click");
                 }
             }
             else
             {
-                if (controllerIcons[index].rectTransform.anchoredPosition.x == 0f)
+                if (controllerIcons[index].anchoredPosition.x == 0f)
                 {
-                    controllerIcons[index].rectTransform.anchoredPosition = new Vector2(60f, controllerIcons[index].rectTransform.anchoredPosition.y);
+                    controllerIcons[index].anchoredPosition = new Vector2(60f, controllerIcons[index].anchoredPosition.y);
                     team1Players += 1;
                     playerInput.GetComponent<HumanController>().teamIndex = 1;
                     if (team1Players + team1AiCount > maxPlayersOnTeam)
@@ -158,11 +172,11 @@ public class SelectSidesGui : MonoBehaviour
                         team1AiCount = maxPlayersOnTeam - team1Players;
                         UpdateAiCountLabels();
                     }
-                    audioSource.PlayOneShot(clickSound);
+                    AudioManager.instance.Play("UI_Click");
                 }
-                else if (controllerIcons[index].rectTransform.anchoredPosition.x < 0f)
+                else if (controllerIcons[index].anchoredPosition.x < 0f)
                 {
-                    controllerIcons[index].rectTransform.anchoredPosition = new Vector2(0f, controllerIcons[index].rectTransform.anchoredPosition.y);
+                    controllerIcons[index].anchoredPosition = new Vector2(0f, controllerIcons[index].anchoredPosition.y);
                     team0Players -= 1;
                     if (team0Players == 0 && team0AiCount <= 0)
                     {
@@ -170,7 +184,7 @@ public class SelectSidesGui : MonoBehaviour
                         UpdateAiCountLabels();
                     }
                     playerInput.GetComponent<HumanController>().teamIndex = -1;
-                    audioSource.PlayOneShot(clickSound);
+                    AudioManager.instance.Play("UI_Click");
                 }
             }
         }
@@ -189,7 +203,7 @@ public class SelectSidesGui : MonoBehaviour
 
                 team1AiCount = Mathf.Clamp(team1AiCount, 0, 6);
 
-                audioSource.PlayOneShot(aiCountChangedSound);
+                AudioManager.instance.Play("UI_Increment");
                 UpdateAiCountLabels();
             }
             else if (playerInput.GetComponent<HumanController>().teamIndex == 0)
@@ -204,7 +218,7 @@ public class SelectSidesGui : MonoBehaviour
                 }
 
                 team0AiCount = Mathf.Clamp(team0AiCount, 0, 6);
-                audioSource.PlayOneShot(aiCountChangedSound);
+                AudioManager.instance.Play("UI_Increment");
                 UpdateAiCountLabels();
             }
         }
@@ -229,7 +243,7 @@ public class SelectSidesGui : MonoBehaviour
                 {
                     team0Border.color = playerInput.GetComponent<HumanController>().color;
                 }
-                audioSource.PlayOneShot(clickSound);
+                AudioManager.instance.Play("UI_Click");
             }
         }
         else if (guiSection == 2)
@@ -245,7 +259,7 @@ public class SelectSidesGui : MonoBehaviour
                 {
                     team0Border.color = Color.white;
                 }
-                audioSource.PlayOneShot(clickSound);
+                AudioManager.instance.Play("UI_Click");
             }
         }
     }
@@ -264,7 +278,7 @@ public class SelectSidesGui : MonoBehaviour
         }
         controllerIcons[index].transform.GetChild(0).GetChild(0).gameObject.SetActive(readiedUp);
         playerReadys[index] = readiedUp;
-        audioSource.PlayOneShot(readyUpSound);
+        AudioManager.instance.Play("UI_Ready");
         // return if not every player has readied up
         for (int i = 0; i < playerReadys.Count; i++)
         {
@@ -299,15 +313,14 @@ public class SelectSidesGui : MonoBehaviour
             MatchSettings.instance.team0PlayerInputs = team0PlayerInputs;
             MatchSettings.instance.team1PlayerInputs = team1PlayerInputs;
             Debug.Log("Starting game!");
-            SceneManager.LoadScene(2);
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
         }
         else
         {
-            for (int i = 0; i < playerReadys.Count; i++)
-            {
-                playerReadys[i] = false;
-                controllerIcons[i].transform.GetChild(0).GetChild(0).gameObject.SetActive(readiedUp);
-            }
+
+            playerReadys[index] = false;
+            controllerIcons[index].transform.GetChild(0).GetChild(0).gameObject.SetActive(false);
+            
         }
         
     }
@@ -384,8 +397,10 @@ public class SelectSidesGui : MonoBehaviour
 
     IEnumerator DisplayError(string errorText)
     {
+        instructionsLabel.enabled = false;
         errorLabel.text = errorText;
         yield return new WaitForSeconds(4f);
         errorLabel.text = "";
+        instructionsLabel.enabled = true;
     }
 }

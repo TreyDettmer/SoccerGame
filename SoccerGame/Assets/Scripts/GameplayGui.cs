@@ -25,6 +25,9 @@ public class GameplayGui : MonoBehaviour
     public GameObject pauseMenu;
     public GameObject restartButton;
     public GameObject resumeButton;
+    public GameObject controlsScreen;
+    public GameObject controlsScreenBackButton;
+    private GameObject previouslySelectedButton;
 
     public TextMeshProUGUI pauseMenuLabel;
     public TextMeshProUGUI pauseMenuGameClockLabel;
@@ -48,6 +51,8 @@ public class GameplayGui : MonoBehaviour
     void Start()
     {
         eventSystem.SetSelectedGameObject(resumeButton);
+        previouslySelectedButton = resumeButton;
+        controlsScreen.SetActive(false);
         EnablePauseMenu(false);
         
     }
@@ -96,6 +101,18 @@ public class GameplayGui : MonoBehaviour
         EnablePauseMenu(false);
     }
 
+    public void OnControlsScreenButtonPressed()
+    {
+        controlsScreen.SetActive(true);
+        eventSystem.SetSelectedGameObject(controlsScreenBackButton);
+    }
+
+    public void OnControlsScreenBackButtonPressed()
+    {
+        controlsScreen.SetActive(false);
+        eventSystem.SetSelectedGameObject(previouslySelectedButton);
+    }
+
     public void OnPauseMenuResumeButtonPressed()
     {
         GameplayManager.instance.ResumeGame();
@@ -104,7 +121,7 @@ public class GameplayGui : MonoBehaviour
 
     public void EnablePauseMenu(bool enable)
     {
-        restartButton.SetActive(false);
+        restartButton.SetActive(true);
         resumeButton.SetActive(true);
         eventSystem.SetSelectedGameObject(resumeButton);
         pauseMenuGameClockLabel.text = gameClockLabel.text;
@@ -121,6 +138,7 @@ public class GameplayGui : MonoBehaviour
             {
                 pauseMenuLabel.text = "Game Over";
                 eventSystem.SetSelectedGameObject(restartButton);
+                previouslySelectedButton = restartButton;
                 resumeButton.SetActive(false);
                 restartButton.SetActive(true);
             }
@@ -128,6 +146,7 @@ public class GameplayGui : MonoBehaviour
             {
                 pauseMenuLabel.text = "End of Regulation";
                 eventSystem.SetSelectedGameObject(resumeButton);
+                previouslySelectedButton = resumeButton;
                 resumeButton.SetActive(true);
 
             }
@@ -136,6 +155,7 @@ public class GameplayGui : MonoBehaviour
         {
             pauseMenuLabel.text = "Extra Time Halftime";
             eventSystem.SetSelectedGameObject(resumeButton);
+            previouslySelectedButton = resumeButton;
         }
         else if (GameClock.instance.elapsedMinutes == 120f)
         {
@@ -143,6 +163,7 @@ public class GameplayGui : MonoBehaviour
             {
                 pauseMenuLabel.text = "Game Over";
                 eventSystem.SetSelectedGameObject(restartButton);
+                previouslySelectedButton = restartButton;
                 resumeButton.SetActive(false);
                 restartButton.SetActive(true);
             }
@@ -150,6 +171,7 @@ public class GameplayGui : MonoBehaviour
             {
                 pauseMenuLabel.text = "End of Extra Time";
                 eventSystem.SetSelectedGameObject(restartButton);
+                previouslySelectedButton = restartButton;
                 resumeButton.SetActive(false);
                 restartButton.SetActive(true);
 
@@ -167,5 +189,10 @@ public class GameplayGui : MonoBehaviour
     {
         GameplayManager.instance.QuitGame();
     }    
+
+    public void OnButtonSelected()
+    {
+        AudioManager.instance.Play("UI_Click");
+    }
 
 }

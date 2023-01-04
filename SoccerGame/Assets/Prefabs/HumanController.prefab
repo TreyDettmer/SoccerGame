@@ -1016,35 +1016,11 @@ MonoBehaviour:
     m_ActionId: 2591cb12-f087-4fc2-b497-6edf1703fa03
     m_ActionName: Player/Slide[/Mouse/rightButton]
   - m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 4648292930393590625}
-        m_TargetAssemblyTypeName: HumanController, Assembly-CSharp
-        m_MethodName: ToggleChipMode
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
     m_ActionId: 84aeca5a-deab-4971-a710-379264d9ce7b
     m_ActionName: Player/ChipModifier[/Mouse/middleButton]
   - m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 4648292930393590625}
-        m_TargetAssemblyTypeName: HumanController, Assembly-CSharp
-        m_MethodName: ToggleSprint
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
     m_ActionId: 5ac2497f-4157-4f31-b9bf-c14be49f6fd2
     m_ActionName: Player/Sprint[/Keyboard/f]
   - m_PersistentCalls:
@@ -1127,6 +1103,22 @@ MonoBehaviour:
       m_Calls: []
     m_ActionId: 2c7d929d-6c7b-4cb4-a9b1-155d4986b3a5
     m_ActionName: UI/TrackedDeviceOrientation
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 4648292930393590625}
+        m_TargetAssemblyTypeName: HumanController, Assembly-CSharp
+        m_MethodName: ExitApplication
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 6d2048c2-7523-4ac4-8120-a840d80a8d7a
+    m_ActionName: UI/Quit[/Keyboard/escape,/XInputControllerWindows/select]
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: UI

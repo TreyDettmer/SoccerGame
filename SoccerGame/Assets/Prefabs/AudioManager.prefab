@@ -1,0 +1,125 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1093485685601705651
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3365357800273673019}
+  - component: {fileID: 3069242113069909654}
+  m_Layer: 0
+  m_Name: AudioManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3365357800273673019
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1093485685601705651}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3069242113069909654
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1093485685601705651}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8de830378522a654d9f53d46ec501e65, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sounds:
+  - name: Kick
+    clip: {fileID: 8300000, guid: 78ad77b2de2401544855763fe20a586f, type: 3}
+    volume: 0.8
+    pitch: 1
+    loop: 0
+    source: {fileID: 0}
+  - name: Goal
+    clip: {fileID: 8300000, guid: 7605f59856e94104e85a6ebf898744ca, type: 3}
+    volume: 0.8
+    pitch: 1
+    loop: 0
+    source: {fileID: 0}
+  - name: Crossbar
+    clip: {fileID: 8300000, guid: 29361dc0332712f499aeb4840513f5a4, type: 3}
+    volume: 0.8
+    pitch: 1
+    loop: 0
+    source: {fileID: 0}
+  - name: UI_Click
+    clip: {fileID: 8300000, guid: 8fa880e61d151944fa4198cce3cc230a, type: 3}
+    volume: 0.8
+    pitch: 1
+    loop: 0
+    source: {fileID: 0}
+  - name: UI_Ready
+    clip: {fileID: 8300000, guid: 13f9f4a1c1465cb4f83ade673f4ffa87, type: 3}
+    volume: 0.8
+    pitch: 1
+    loop: 0
+    source: {fileID: 0}
+  - name: Whistle1
+    clip: {fileID: 8300000, guid: 7c589c2636e84f140909ebd6f8de446d, type: 3}
+    volume: 0.7
+    pitch: 1
+    loop: 0
+    source: {fileID: 0}
+  - name: Whistle2
+    clip: {fileID: 8300000, guid: dce6e1a6979d2ce4fbb891f6d18976e4, type: 3}
+    volume: 0.7
+    pitch: 1
+    loop: 0
+    source: {fileID: 0}
+  - name: OutOfBounds
+    clip: {fileID: 8300000, guid: 26b3cc3d152699e4e936c442af731d7e, type: 3}
+    volume: 0.3
+    pitch: 1.05
+    loop: 0
+    source: {fileID: 0}
+  - name: FoulGrunt
+    clip: {fileID: 8300000, guid: 23ed11f2d72dd974caccc43b01c2498b, type: 3}
+    volume: 0.8
+    pitch: 1
+    loop: 0
+    source: {fileID: 0}
+  - name: UI_Increment
+    clip: {fileID: 8300000, guid: 46e01202d2010eb4f8d573022c709bc1, type: 3}
+    volume: 0.8
+    pitch: 1
+    loop: 0
+    source: {fileID: 0}
+  - name: Theme1
+    clip: {fileID: 8300000, guid: f94bc85f42337a74290ab61de778295e, type: 3}
+    volume: 0.1
+    pitch: 1
+    loop: 1
+    source: {fileID: 0}
+  - name: Theme2
+    clip: {fileID: 8300000, guid: f8aaa2e109a725e44ad3ce30be197d9b, type: 3}
+    volume: 0.05
+    pitch: 1
+    loop: 1
+    source: {fileID: 0}
+  - name: Slide
+    clip: {fileID: 8300000, guid: 2d80cab0dbe821f4db65aff2cc4dcacc, type: 3}
+    volume: 0.7
+    pitch: 1
+    loop: 0
+    source: {fileID: 0}

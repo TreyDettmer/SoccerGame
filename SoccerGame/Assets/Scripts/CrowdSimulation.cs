@@ -31,7 +31,6 @@ public class CrowdSimulation : MonoBehaviour
 
             }
         }
-        Debug.Log(rows);
         GenerateCrowd();
     }
 

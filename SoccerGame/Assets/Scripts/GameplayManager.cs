@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using DG.Tweening;
 using UnityEngine.SceneManagement;
-using UnityEngine.SceneManagement;
+using System;
 
 public class GameplayManager : MonoBehaviour
 {
@@ -18,15 +18,12 @@ public class GameplayManager : MonoBehaviour
     [SerializeField]
     private GameObject aiPlayerObjectPrefab;
     private bool gameIsCountingDown = false;
-    public int numberOfAi = 1;
     private GameClock gameClock;
     public float gameLengthInMinutes = 1f;
     public Transform team0SpawnPointParent;
     public Transform team1SpawnPointParent;
     private List<Transform> team0SpawnPoints = new List<Transform>();
     private List<Transform> team1SpawnPoints = new List<Transform>();
-    [SerializeField] TeamBrain team0Brain;
-    [SerializeField] TeamBrain team1Brain;
 
     [SerializeField]
     Transform ballSpawnPoint;
@@ -54,7 +51,7 @@ public class GameplayManager : MonoBehaviour
     int numberOfAiOnTeam1 = 1;
 
     public GameObject playerPrefab;
-
+    public Camera stadiumCamera;
     IEnumerator postGoalRoutine;
     bool postGoalRoutineIsRunning = false;
 
@@ -124,7 +121,9 @@ public class GameplayManager : MonoBehaviour
         audioSource = GetComponent<AudioSource>();
         gameClock = GetComponent<GameClock>();
         gameClock.realTimeGameLengthInMinutes = gameLengthInMinutes;
-        
+        AudioManager.instance.StopAllSounds();
+        AudioManager.instance.Play("Theme2");
+
 
         for (int i = 0; i < team0SpawnPointParent.childCount; i++)
         {
@@ -161,12 +160,19 @@ public class GameplayManager : MonoBehaviour
         if (playerInputs.Count > 1)
         {
             FindObjectOfType<PlayerInputManager>().splitScreen = true;
+            if (playerInputs.Count == 3)
+            {
+                stadiumCamera.rect = new Rect(.5f, 0f, 1, .5f);
+            }
         }
 
         FindObjectOfType<InputManager>().DisableJoining();
         AssignTeammatesAndOpponents();
         StartCoroutine(GameCountdown());
-
+        foreach (PlayerGui playerGui in FindObjectsOfType<PlayerGui>())
+        {
+            playerGui.ConfigureViewportRect();
+        }
         UpdateTeamWithBall(-1);
     }
 
@@ -186,24 +192,15 @@ public class GameplayManager : MonoBehaviour
         player.ResetValues();
         if (player.teamIndex == 0)
         {
-            player.GetComponent<AiController>().teamBrain = team0Brain;
-            if (!team0Brain.players.Contains(player))
-            {
-                team0Brain.players.Add(player);
-            }
             player.UpdateMaterial();
             MinimapController.instance.CreatePlayerCanvasPrefab(player, new Color(0f, 0f, 1f));
         }
         else
         {
-            player.GetComponent<AiController>().teamBrain = team1Brain;
-            if (!team1Brain.players.Contains(player))
-            {
-                team1Brain.players.Add(player);
-            }
             player.UpdateMaterial();
             MinimapController.instance.CreatePlayerCanvasPrefab(player, new Color(1f, 0f, 0f));
         }
+        player.InitializeTeamInfo();
     }
 
     void SpawnAiPlayers()
@@ -214,11 +211,7 @@ public class GameplayManager : MonoBehaviour
             player.teamIndex = 0;
             teams[0].Add(player);
             players.Add(player);
-            player.GetComponent<AiController>().teamBrain = team0Brain;
-            if (!team0Brain.players.Contains(player))
-            {
-                team0Brain.players.Add(player);
-            }
+            player.InitializeTeamInfo();
             player.UpdateGameState(Player.GameState.Gameplay);
 
         }
@@ -228,11 +221,7 @@ public class GameplayManager : MonoBehaviour
             player.teamIndex = 1;
             teams[1].Add(player);
             players.Add(player);
-            player.GetComponent<AiController>().teamBrain = team1Brain;
-            if (!team1Brain.players.Contains(player))
-            {
-                team1Brain.players.Add(player);
-            }
+            player.InitializeTeamInfo();
             player.UpdateGameState(Player.GameState.Gameplay);
         }
     }
@@ -272,7 +261,7 @@ public class GameplayManager : MonoBehaviour
 
     public void GoalScored(int teamGoalScoredOn)
     {
-        audioSource.PlayOneShot(crowdAudioClip);
+        AudioManager.instance.Play("Goal");
         if (teamGoalScoredOn == 0)
         {
             team1Score += 1;
@@ -375,6 +364,7 @@ public class GameplayManager : MonoBehaviour
 
     public void HandleOutOfBounds(int teamIndex = -1)
     {
+        AudioManager.instance.Play("OutOfBounds");
         ResetPlayers();
         ResetBall(teamIndex);
         StartCoroutine(GameCountdown(2f));
@@ -395,7 +385,7 @@ public class GameplayManager : MonoBehaviour
         {
             humanControllers[i].ToggleUIActionMap(false);
         }
-        SceneManager.LoadScene(2);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         //ResetPlayers();
         //ResetBall();
         //team0Score = 0;
@@ -434,7 +424,7 @@ public class GameplayManager : MonoBehaviour
         }
         GameplayGui.instance.UpdateCountdown("Go");
         gameClock.ResumeClock();
-        audioSource.PlayOneShot(whistleAudioClip);
+        AudioManager.instance.Play("Whistle1");
         for (int i = 0; i < players.Count; i++)
         {
             players[i].UpdatePlayerState(Player.PlayerState.Playing);
@@ -519,14 +509,11 @@ public class GameplayManager : MonoBehaviour
 
     public Vector3 GetGoalPositionForTeam(int teamIndex)
     {
-        if (teamIndex == 0)
+        if (teamIndex != 0 && teamIndex != 1)
         {
-            return goals[1].transform.position;
+            return Vector3.zero;
         }
-        else
-        {
-            return goals[0].transform.position;
-        }
+        return Array.Find(goals, goal => goal.teamIndex == teamIndex).transform.position; 
     }
 
     public void QuitGame()
@@ -539,7 +526,7 @@ public class GameplayManager : MonoBehaviour
         }
         PlayerInputManager playerInputManager = FindObjectOfType<PlayerInputManager>();
         SceneManager.MoveGameObjectToScene(playerInputManager.gameObject, SceneManager.GetActiveScene());
-        SceneManager.LoadScene(0);
+        SceneManager.LoadScene(1);
     }
     public void PauseForPeriodEnd()
     {
@@ -554,7 +541,7 @@ public class GameplayManager : MonoBehaviour
             }
             postGoalRoutineIsRunning = false;
         }
-        audioSource.PlayOneShot(endOfPeriodWhistleAudioClip);
+        AudioManager.instance.Play("Whistle2");
         // Disable players
         for (int i = 0; i < players.Count; i++)
         {

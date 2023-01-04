@@ -129,46 +129,46 @@ public class PitchGrid : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        GUIStyle guiStyle = new GUIStyle();
-        guiStyle.fontSize = 10;
-        if (showTeam1)
-        {
-            for (int rowIndex = 0; rowIndex < gridPoints.Count; rowIndex++)
-            {
-                for (int colIndex = 0; colIndex < gridPoints[rowIndex].Count; colIndex++)
-                {
-                    if (showGridColors)
-                    {
-                        Gizmos.color = gridColorsTeam1[rowIndex][colIndex];
-                        Gizmos.DrawSphere(gridPoints[rowIndex][colIndex], 1f);
-                    }
+        //GUIStyle guiStyle = new GUIStyle();
+        //guiStyle.fontSize = 10;
+        //if (showTeam1)
+        //{
+        //    for (int rowIndex = 0; rowIndex < gridPoints.Count; rowIndex++)
+        //    {
+        //        for (int colIndex = 0; colIndex < gridPoints[rowIndex].Count; colIndex++)
+        //        {
+        //            if (showGridColors)
+        //            {
+        //                Gizmos.color = gridColorsTeam1[rowIndex][colIndex];
+        //                Gizmos.DrawSphere(gridPoints[rowIndex][colIndex], 1f);
+        //            }
 
-                    if (showPointScores)
-                    {
-                        Handles.Label(gridPoints[rowIndex][colIndex], ((int)gridScoresTeam1[rowIndex][colIndex]).ToString(), guiStyle);
-                    }
-                }
-            }
-        }
-        else
-        {
-            for (int rowIndex = 0; rowIndex < gridPoints.Count; rowIndex++)
-            {
-                for (int colIndex = 0; colIndex < gridPoints[rowIndex].Count; colIndex++)
-                {
-                    if (showGridColors)
-                    {
-                        Gizmos.color = gridColorsTeam0[rowIndex][colIndex];
-                        Gizmos.DrawSphere(gridPoints[rowIndex][colIndex], 1f);
-                    }
+        //            if (showPointScores)
+        //            {
+        //                Handles.Label(gridPoints[rowIndex][colIndex], ((int)gridScoresTeam1[rowIndex][colIndex]).ToString(), guiStyle);
+        //            }
+        //        }
+        //    }
+        //}
+        //else
+        //{
+        //    for (int rowIndex = 0; rowIndex < gridPoints.Count; rowIndex++)
+        //    {
+        //        for (int colIndex = 0; colIndex < gridPoints[rowIndex].Count; colIndex++)
+        //        {
+        //            if (showGridColors)
+        //            {
+        //                Gizmos.color = gridColorsTeam0[rowIndex][colIndex];
+        //                Gizmos.DrawSphere(gridPoints[rowIndex][colIndex], 1f);
+        //            }
 
-                    if (showPointScores)
-                    {
-                        Handles.Label(gridPoints[rowIndex][colIndex], ((int)gridScoresTeam0[rowIndex][colIndex]).ToString(), guiStyle);
-                    }
-                }
-            }
-        }
+        //            if (showPointScores)
+        //            {
+        //                Handles.Label(gridPoints[rowIndex][colIndex], ((int)gridScoresTeam0[rowIndex][colIndex]).ToString(), guiStyle);
+        //            }
+        //        }
+        //    }
+        //}
 
     }
 

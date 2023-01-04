@@ -31,8 +31,6 @@ public class AiController : MonoBehaviour
     private Player opponentImDefending = null;
     private List<Vector3> shotPlacements = new List<Vector3>();
     private LayerMask goalLayerMask;
-    [HideInInspector] public TeamBrain teamBrain;
-    Transform formationSpot = null;
 
     public float defensiveOneOnOneDistance = 3f;
     public float defensiveSurroundingDistance = 4f;
@@ -68,7 +66,6 @@ public class AiController : MonoBehaviour
     {
         if (myPlayer)
         {
-            myPlayer.IsSprinting = true;
             if (myPlayer.HasBall)
             {
                 UpdateAiState(AIState.Dribbling);
@@ -401,7 +398,7 @@ public class AiController : MonoBehaviour
 
     void PursueBall()
     {
-        Vector3 direction = CalculateInterceptCourse(myPlayer.ball.transform.position, myPlayer.ball.currentVelocity,myPlayer.ball.currentAccelerationVector, transform.position, myPlayer.sprintingMaxSpeed);
+        Vector3 direction = CalculateInterceptCourse(myPlayer.ball.transform.position, myPlayer.ball.currentVelocity,myPlayer.ball.currentAccelerationVector, transform.position, myPlayer.maxSpeed);
         Vector3 relativeDirection;
         if (myPlayer.teamIndex == 1)
         {
@@ -505,25 +502,9 @@ public class AiController : MonoBehaviour
 
 
 
-            // surround player
-
-
-            if ((transform.position - desiredPosition).sqrMagnitude < 6)
-            {
-                myPlayer.IsSprinting = false;
-            }
-            else
-            {
-                myPlayer.IsSprinting = true;
-            }
-            
-            Vector3 direction = CalculateInterceptCourse(desiredPosition, myPlayer.ball.owner.currentVelocity, myPlayer.ball.owner.currentAccelerationVector, transform.position, myPlayer.sprintingMaxSpeed,true);
+            // surround player           
+            Vector3 direction = CalculateInterceptCourse(desiredPosition, myPlayer.ball.owner.currentVelocity, myPlayer.ball.owner.currentAccelerationVector, transform.position, myPlayer.maxSpeed,true);
             Debug.DrawRay(desiredPosition, Vector3.up * 3f, Color.red);
-            
-            //if (direction == Vector3.zero)
-            //{
-            //    direction = myPlayer.ball.owner.transform.position - transform.position;
-            //}
 
             Vector3 relativeDirection;
             if (myPlayer.teamIndex == 1)
@@ -853,19 +834,6 @@ public class AiController : MonoBehaviour
             return (S2) * targetDir + aTargetSpeed;
         else
             return (S1) * targetDir + aTargetSpeed;
-    }
-
-    // when AiController is disabled, let the team brain know we aren't defending the ball
-    public void NotifyBrainOfDetachment()
-    {
-        if (myPlayer && teamBrain)
-        {
-            teamBrain.StoppedDefendingOpponent(opponentImDefending);
-            //if (opponentImDefending == myPlayer.ball.owner)
-            //{
-            //    teamBrain.PlayerStoppedDefendingBall(myPlayer);
-            //}
-        }
     }
 
     public void CalculateNavmeshPath(Vector3 destination)

@@ -40,6 +40,8 @@ public class TitleScreen : MonoBehaviour
         //{
         //    uiAnimators[i].Play(0);
         //}
+        AudioManager.instance.StopAllSounds();
+        AudioManager.instance.Play("Theme1");
     }
 
     // Update is called once per frame
@@ -60,11 +62,11 @@ public class TitleScreen : MonoBehaviour
 
     void LoadNextScene(PlayerInput playerInput)
     {
-        SceneManager.LoadScene(1);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
     }
 
     public void LoadNextScene()
     {
-        SceneManager.LoadScene(1);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
     }
 }

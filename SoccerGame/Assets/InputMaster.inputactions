@@ -227,7 +227,7 @@
                 {
                     "name": "",
                     "id": "df9deb80-5613-4e43-9f80-03f838eeb5f3",
-                    "path": "<Keyboard>/f",
+                    "path": "<Keyboard>/shift",
                     "interactions": "",
                     "processors": "",
                     "groups": "Keyboard and mouse",
@@ -360,6 +360,15 @@
                     "type": "PassThrough",
                     "id": "2c7d929d-6c7b-4cb4-a9b1-155d4986b3a5",
                     "expectedControlType": "Quaternion",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Quit",
+                    "type": "Button",
+                    "id": "6d2048c2-7523-4ac4-8120-a840d80a8d7a",
+                    "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -792,6 +801,28 @@
                     "processors": "",
                     "groups": "XR",
                     "action": "TrackedDeviceOrientation",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "365a759a-0f7b-4b09-9166-6da49f689a81",
+                    "path": "<Keyboard>/escape",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard and mouse",
+                    "action": "Quit",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "defc349f-baef-423f-bf23-78feb8e59fc4",
+                    "path": "<Gamepad>/select",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "Quit",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

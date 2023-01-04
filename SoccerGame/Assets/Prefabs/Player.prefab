@@ -2272,8 +2272,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gameState: 0
-  maxSpeed: 12
-  sprintingMaxSpeed: 18
+  maxSpeed: 18
   acceleration: 40
   maxAccelForce: 700
   speedFactor: 1
@@ -2351,8 +2350,8 @@ MonoBehaviour:
   graphicsTransform: {fileID: 0}
   horizontalInput: 0
   verticalInput: 0
-  currentMaxSpeed: 0
   currentVelocity: {x: 0, y: 0, z: 0}
+  currentAccelerationVector: {x: 0, y: 0, z: 0}
   defaultHeight: 0.3
   springStrength: 0
   springDampening: 0
@@ -2699,6 +2698,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6aa415f866023114e805166bc9137b0d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  shouldAnticipateChangeInDirection: 1
   aiState: 0
   detectionRadius: 20
   shotPlacementMaxXOffset: 4
@@ -2706,7 +2706,6 @@ MonoBehaviour:
   shotPlacementStep: 3
   shotClearanceNeeded: 0.5
   playerImPassingTo: {fileID: 0}
-  teamBrain: {fileID: 0}
   defensiveOneOnOneDistance: 4
   defensiveSurroundingDistance: 5
   defensiveSurroundingAngle: 55

@@ -133,19 +133,6 @@ public class HumanController : MonoBehaviour
 
     #region Input Methods
 
-    public void ToggleSprint(InputAction.CallbackContext context)
-    {
-        if (!myPlayer) return;
-        if (context.canceled)
-        {
-            myPlayer.IsSprinting = false;
-        }
-        else
-        {
-            myPlayer.IsSprinting = true;
-            
-        }
-    }
 
     public void OnSwitchPlayers(InputAction.CallbackContext context)
     {
@@ -222,6 +209,13 @@ public class HumanController : MonoBehaviour
         GameplayManager.instance.PauseGame();
     }
 
+    public void ExitApplication(InputAction.CallbackContext context)
+    {
+        if (SceneManager.GetActiveScene().name == "SelectSides")
+        {
+            Application.Quit();
+        }
+    }
     public void MoveLeft(InputAction.CallbackContext context)
     {
         if (context.performed)
