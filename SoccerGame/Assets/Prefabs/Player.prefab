@@ -2701,9 +2701,10 @@ MonoBehaviour:
   shouldAnticipateChangeInDirection: 1
   aiState: 0
   detectionRadius: 20
-  shotPlacementMaxXOffset: 4
-  shotPlacementMaxYHeight: 2
-  shotPlacementStep: 3
+  shotPlacementMaxXOffset: 6
+  shotPlacementMaxYHeight: 2.3
+  verticalShotPlacementStep: 1.5
+  horizontalShotPlacementStep: 3
   shotClearanceNeeded: 0.5
   playerImPassingTo: {fileID: 0}
   defensiveOneOnOneDistance: 4

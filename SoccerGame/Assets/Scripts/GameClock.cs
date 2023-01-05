@@ -81,7 +81,7 @@ public class GameClock : MonoBehaviour
             hasStarted = true;
         }
         isPaused = false;
-        float calculatedMinuteLength = realTimeGameLengthInMinutes / 90f;
+        float calculatedMinuteLength = (realTimeGameLengthInMinutes / 90f) * 60f;
         calculatedSecondLength = calculatedMinuteLength / 60f;
     }
 

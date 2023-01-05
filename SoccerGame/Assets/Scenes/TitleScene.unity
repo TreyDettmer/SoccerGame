@@ -182,10 +182,10 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Soccer
+  m_text: Simple
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: b3a004985d2406e4a8da0a417990c1ec, type: 2}
+  m_sharedMaterial: {fileID: 4788738243498026396, guid: b3a004985d2406e4a8da0a417990c1ec, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -209,7 +209,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 116.35
+  m_fontSize: 85.95
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -500,8 +500,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Press Any Button To Start
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 81f8276b3393904459babd89d8408702, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 81f8276b3393904459babd89d8408702, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 26ef7636b97400c4f9b00df378852625, type: 2}
+  m_sharedMaterial: {fileID: -6170140236841351537, guid: 26ef7636b97400c4f9b00df378852625, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -732,10 +732,10 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Game
+  m_text: Soccer
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: b3a004985d2406e4a8da0a417990c1ec, type: 2}
+  m_sharedMaterial: {fileID: 4788738243498026396, guid: b3a004985d2406e4a8da0a417990c1ec, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -759,7 +759,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 116.35
+  m_fontSize: 85.95
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -1051,10 +1051,10 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Created By Trey Dettmer
+  m_text: A Calico Games Creation
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 81f8276b3393904459babd89d8408702, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 81f8276b3393904459babd89d8408702, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 26ef7636b97400c4f9b00df378852625, type: 2}
+  m_sharedMaterial: {fileID: -6170140236841351537, guid: 26ef7636b97400c4f9b00df378852625, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1078,7 +1078,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 27.1
+  m_fontSize: 24.55
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1

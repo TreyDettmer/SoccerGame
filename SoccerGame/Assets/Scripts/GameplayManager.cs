@@ -120,11 +120,9 @@ public class GameplayManager : MonoBehaviour
         ball = FindObjectOfType<Ball>();
         audioSource = GetComponent<AudioSource>();
         gameClock = GetComponent<GameClock>();
-        gameClock.realTimeGameLengthInMinutes = gameLengthInMinutes;
+        gameClock.realTimeGameLengthInMinutes = MatchSettings.instance.gameLengthInMinutes;
         AudioManager.instance.StopAllSounds();
         AudioManager.instance.Play("Theme2");
-
-
         for (int i = 0; i < team0SpawnPointParent.childCount; i++)
         {
             team0SpawnPoints.Add(team0SpawnPointParent.GetChild(i));
@@ -422,7 +420,7 @@ public class GameplayManager : MonoBehaviour
             yield return new WaitForSeconds(1f);
             currentCountdownTime -= 1f;
         }
-        GameplayGui.instance.UpdateCountdown("Go");
+
         gameClock.ResumeClock();
         AudioManager.instance.Play("Whistle1");
         for (int i = 0; i < players.Count; i++)
@@ -430,7 +428,7 @@ public class GameplayManager : MonoBehaviour
             players[i].UpdatePlayerState(Player.PlayerState.Playing);
             players[i].UpdateGameState(Player.GameState.Gameplay);
         }
-        yield return new WaitForSeconds(1f);
+
         GameplayGui.instance.UpdateCountdown("");
         GameplayGui.instance.ToggleScoreLabel(true);
         gameIsCountingDown = false;

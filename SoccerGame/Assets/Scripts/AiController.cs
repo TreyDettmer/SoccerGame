@@ -18,7 +18,8 @@ public class AiController : MonoBehaviour
 
     public float shotPlacementMaxXOffset = 4f;
     public float shotPlacementMaxYHeight = 2f;
-    public float shotPlacementStep = 3f;
+    public float verticalShotPlacementStep = 3f;
+    public float horizontalShotPlacementStep = 3f;
     // the radius of the spheres used during the shot path spherecasts
     public float shotClearanceNeeded = .5f;
     private Vector3 currentShotPlacement = Vector3.zero;
@@ -105,16 +106,16 @@ public class AiController : MonoBehaviour
     {
         myPlayer = GetComponent<Player>();
         shotPlacements.Clear();
-        float currentYOffset = 1f;
-        while (currentYOffset <= (shotPlacementMaxYHeight + 1f) - ((shotPlacementMaxYHeight) / (shotPlacementStep + 1f)))
+        float currentYOffset = .1f;
+        while (currentYOffset <= (shotPlacementMaxYHeight + 1f) - ((shotPlacementMaxYHeight) / (verticalShotPlacementStep + 1f)))
         {
-            currentYOffset += (shotPlacementMaxYHeight) / (shotPlacementStep + 1f);
-            float currentXOffset = -shotPlacementMaxXOffset + (2f * shotPlacementMaxXOffset) / (shotPlacementStep + 1f);
-            while (currentXOffset <= shotPlacementMaxXOffset - ((2f * shotPlacementMaxXOffset) / (shotPlacementStep + 1f)))
+            currentYOffset += (shotPlacementMaxYHeight) / (verticalShotPlacementStep + 1f);
+            float currentXOffset = -shotPlacementMaxXOffset + (2f * shotPlacementMaxXOffset) / (horizontalShotPlacementStep + 1f);
+            while (currentXOffset <= shotPlacementMaxXOffset - ((2f * shotPlacementMaxXOffset) / (horizontalShotPlacementStep + 1f)))
             {
 
                 shotPlacements.Add(myPlayer.opponentsGoalsPosition + new Vector3(currentXOffset, currentYOffset, 0f));
-                currentXOffset += (2f * shotPlacementMaxXOffset) / (shotPlacementStep + 1f);
+                currentXOffset += (2f * shotPlacementMaxXOffset) / (horizontalShotPlacementStep + 1f);
 
             }
 

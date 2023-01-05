@@ -73,8 +73,11 @@ public class SelectSidesGui : MonoBehaviour
             }
             playerInputs[i].GetComponent<HumanController>().guiSection = 1;
             PlayerMovedUpOrDown(playerInputs[i], true, 1);
+            playerInputs[i].GetComponent<HumanController>().teamIndex = -1;
         }
+        FindObjectOfType<InputManager>().DisableJoining(false);
     }
+
 
     // Update is called once per frame
     void Update()
@@ -375,13 +378,13 @@ public class SelectSidesGui : MonoBehaviour
 
         if (team0Players + team0AiCount > maxPlayersOnTeam)
         {
-            StartCoroutine(DisplayError("Team 0 has more than the 6 player limit."));
+            StartCoroutine(DisplayError("Blue Team has more than the 6 player limit."));
             return false;
         }
 
         if (team1Players + team1AiCount > maxPlayersOnTeam)
         {
-            StartCoroutine(DisplayError("Team 1 has more than the 6 player limit."));
+            StartCoroutine(DisplayError("Red Team has more than the 6 player limit."));
             return false;
         }
 

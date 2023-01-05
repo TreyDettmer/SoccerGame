@@ -11,6 +11,7 @@ public class MatchSettings : MonoBehaviour
     public List<PlayerInput> team1PlayerInputs;
     public int numberOfAiOnTeam0 = 1;
     public int numberOfAiOnTeam1 = 1;
+    public float gameLengthInMinutes = 1f;
 
     private void Awake()
     {
